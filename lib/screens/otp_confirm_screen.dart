@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class OtpConfirmScreen extends StatefulWidget {
   final String parcelId;
@@ -78,21 +79,104 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Confirm Order OTP")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ElevatedButton(
-                onPressed: _sendOtp, child: const Text("Send OTP to Sender")),
-            const SizedBox(height: 16),
-            TextField(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          "Confirm Order OTP",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF514ca1),
+        elevation: 0,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Send OTP Button
+              ElevatedButton(
+                onPressed: _sendOtp,
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFF514ca1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 4,
+                  shadowColor: const Color(0xFF514ca1).withOpacity(0.5),
+                ),
+                child: Text(
+                  "Send OTP to Sender",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // OTP Input Field
+              TextField(
                 controller: _otpCtrl,
-                decoration: const InputDecoration(labelText: "Enter OTP")),
-            const SizedBox(height: 16),
-            ElevatedButton(
-                onPressed: _verifyOtp, child: const Text("Verify OTP")),
-          ],
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF6c5050),
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  labelText: "Enter OTP",
+                  labelStyle: GoogleFonts.poppins(
+                    color: const Color(0xFF6c5050).withOpacity(0.7),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFd79141),
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Verify OTP Button
+              ElevatedButton(
+                onPressed: _verifyOtp,
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFd79141),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 4,
+                  shadowColor: const Color(0xFFd79141).withOpacity(0.5),
+                ),
+                child: Text(
+                  "Verify OTP",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

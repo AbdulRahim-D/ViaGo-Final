@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String? username;
   int _currentIndex = 0;
 
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       drawer: MenuScreen(username: username),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: const Color(0xFF514ca1), // Primary Purple
         centerTitle: true,
         title: ClipRRect(
           borderRadius: BorderRadius.circular(27),
@@ -96,17 +96,24 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
+          color: const Color(0xFF514ca1), // Primary Purple
           borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6c5050).withOpacity(0.3), // Neutral/Dark Text Warm Brown
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: BottomNavigationBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           currentIndex: _currentIndex,
-          selectedItemColor: Theme.of(context).colorScheme.onPrimary,
+          selectedItemColor: const Color(0xFFf8af0b), // Highlight Yellow-Orange
           unselectedItemColor:
-              Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+              const Color(0xFFf8af0b).withOpacity(0.7), // Highlight Yellow-Orange
           onTap: (index) {
             setState(() {
               _currentIndex = index;
@@ -141,34 +148,43 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Container(
           width: double.infinity,
-          color: Theme.of(context).colorScheme.primary,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          decoration: const BoxDecoration(
+            color: Color(0xFF514ca1), // Primary Purple
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+          ),
           child: Text(
             "Welcome ${username ?? 'username'}",
             style: GoogleFonts.poppins(
-                color: Theme.of(context).colorScheme.onPrimary, fontSize: 18),
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 40),
         _buildActionPanel(
           context,
           "Sender",
-          Theme.of(context).colorScheme.primary, // Use primary color
+          const Color(0xFF514ca1), // Primary Purple
           Icons.person,
           const SenderScreen(),
         ),
         _buildActionPanel(
           context,
           "Traveler",
-          Theme.of(context).colorScheme.tertiary, // Use tertiary color
+           const Color(0xFFd79141), // Accent Olive Green
           Icons.directions_run,
           const TravelerScreen(),
         ),
         _buildActionPanel(
           context,
           "Receiver",
-          Theme.of(context).colorScheme.secondary, // Use secondary color
+         const Color(0xFFa8ad5f), // Accent Orange
           Icons.home,
           const ReceiverScreen(),
         ),
@@ -189,20 +205,25 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Stack(
           children: [
+            // Main background container with gradient and shadow
             Container(
               height: 80,
               decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(50),
+                gradient: LinearGradient(
+                  colors: [color.withOpacity(0.9), color],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(40),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
+                    color: color.withOpacity(0.4),
                     spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -236,22 +257,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Positioned(
-              right: 15,
+              right: 25,
               top: 0,
               bottom: 0,
               child: Center(
-                child: Row(
-                  children: List.generate(3, (i) {
-                    return Container(
-                      width: 18,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  }),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.7),
+                  size: 20,
                 ),
               ),
             ),

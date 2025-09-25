@@ -10,7 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/location.dart';
-import '../services/firestore_service.dart'; // Added for notifications
+import '../services/firestore_service.dart';
 
 class TravelerScreen extends StatefulWidget {
   const TravelerScreen({super.key});
@@ -24,24 +24,32 @@ class _TravelerScreenState extends State<TravelerScreen> {
   final _fromCity = TextEditingController();
   final _toCity = TextEditingController();
   final _capacity = TextEditingController();
-  final _phone = TextEditingController(); // Added phone controller
+  final _phone = TextEditingController();
   DateTime? _date;
   String? _mode;
+
+  // Define brand colors
+  static const Color primaryPurple = Color(0xFF514ca1);
+  static const Color accentOrange = Color(0xFFd79141);
+  static const Color darkTextBrown = Color(0xFF6c5050);
+  static const Color lightBackground = Color(0xFFF0F0F0); // A light, neutral background
 
   @override
   void dispose() {
     _fromCity.dispose();
     _toCity.dispose();
     _capacity.dispose();
-    _phone.dispose(); // Disposed phone controller
+    _phone.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: lightBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFd79141),
+        backgroundColor: accentOrange,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -76,7 +84,7 @@ class _TravelerScreenState extends State<TravelerScreen> {
                               hint: 'Destination point'),
                           _buildTextField('Phone:', _phone,
                               hint: 'Your phone number',
-                              type: TextInputType.phone), // Added phone field
+                              type: TextInputType.phone),
                           _buildDateField('Date of traveling:', _date,
                               () async {
                             final now = DateTime.now();
@@ -85,6 +93,17 @@ class _TravelerScreenState extends State<TravelerScreen> {
                               firstDate: now,
                               lastDate: now.add(const Duration(days: 365)),
                               initialDate: now,
+                              builder: (context, child) {
+                                return Theme(
+                                  data: ThemeData.light().copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: accentOrange,
+                                      onPrimary: Colors.white,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
                             if (d != null) setState(() => _date = d);
                           }),
@@ -101,7 +120,7 @@ class _TravelerScreenState extends State<TravelerScreen> {
                       _PackagesList(
                           fromCityCtrl: _fromCity,
                           toCityCtrl: _toCity,
-                          phoneCtrl: _phone), // Pass phone controller
+                          phoneCtrl: _phone),
                     ],
                   ),
                 ),
@@ -116,15 +135,12 @@ class _TravelerScreenState extends State<TravelerScreen> {
   Widget _buildCard({required String title, required List<Widget> children}) {
     return Card(
       elevation: 4.0,
+      shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-        side: const BorderSide(
-          color: Color(0xFFd79141),
-          width: 4.0,
-        ),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -133,10 +149,10 @@ class _TravelerScreenState extends State<TravelerScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFd79141),
+                color: accentOrange,
               ),
             ),
-            const Divider(color: Color(0xFFd79141)),
+            const Divider(color: accentOrange, thickness: 2),
             ...children,
           ],
         ),
@@ -154,27 +170,33 @@ class _TravelerScreenState extends State<TravelerScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Text(label,
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500, color: darkTextBrown)),
           ),
           TextFormField(
             controller: controller,
             keyboardType: type,
-            style: GoogleFonts.poppins(),
+            style: GoogleFonts.poppins(color: darkTextBrown),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.poppins(color: Colors.grey),
+              hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.grey.shade400),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide:
-                    const BorderSide(color: Color(0xFFd79141), width: 2.0),
+                borderSide: const BorderSide(color: accentOrange, width: 2.0),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              fillColor: Colors.white,
+              filled: true,
             ),
             validator: (v) =>
                 (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -195,31 +217,38 @@ class _TravelerScreenState extends State<TravelerScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Text(label,
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500, color: darkTextBrown)),
           ),
           GestureDetector(
             onTap: onPick,
             child: AbsorbPointer(
               child: TextFormField(
                 controller: TextEditingController(text: formattedDate),
-                style: GoogleFonts.poppins(),
+                style: GoogleFonts.poppins(color: darkTextBrown),
                 decoration: InputDecoration(
                   hintText: 'DD/MM/YYYY',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                  hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
                   suffixIcon: const Icon(Icons.calendar_today,
-                      color: Color(0xFFd79141)),
+                      color: accentOrange),
                   isDense: true,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.grey.shade400),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                     borderSide:
-                        const BorderSide(color: Color(0xFFd79141), width: 2.0),
+                        const BorderSide(color: accentOrange, width: 2.0),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  fillColor: Colors.white,
+                  filled: true,
                 ),
               ),
             ),
@@ -238,33 +267,39 @@ class _TravelerScreenState extends State<TravelerScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Text(label,
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500, color: darkTextBrown)),
           ),
           DropdownButtonFormField<String>(
             isExpanded: true,
             value: _mode,
             hint: Text('Select Mode',
-                style: GoogleFonts.poppins(color: Colors.grey)),
-            style: GoogleFonts.poppins(color: Colors.grey),
+                style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+            style: GoogleFonts.poppins(color: darkTextBrown),
             decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.grey.shade400),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide:
-                    const BorderSide(color: Color(0xFFd79141), width: 2.0),
+                borderSide: const BorderSide(color: accentOrange, width: 2.0),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              fillColor: Colors.white,
+              filled: true,
             ),
             items: items.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child:
-                    Text(value, style: GoogleFonts.poppins(color: Colors.grey)),
+                child: Text(value,
+                    style: GoogleFonts.poppins(color: darkTextBrown)),
               );
             }).toList(),
             onChanged: (String? newValue) {
@@ -284,11 +319,12 @@ class _TravelerScreenState extends State<TravelerScreen> {
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFd79141),
+          backgroundColor: accentOrange,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
           padding: const EdgeInsets.symmetric(vertical: 15),
+          elevation: 5,
         ),
         onPressed: _saveTrip,
         child: Text(
@@ -353,8 +389,7 @@ class _PackagesListState extends State<_PackagesList> {
   List<String> _blockedUsers = [];
   final LocationService _locationService = LocationService();
   StreamSubscription<Position>? _locationSubscription;
-  final FirestoreService _firestoreService =
-      FirestoreService(); // Instantiate FirestoreService
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -432,17 +467,26 @@ class _PackagesListState extends State<_PackagesList> {
         if (!snap.hasData) return const SizedBox();
         final docs = snap.data!.docs;
         if (docs.isEmpty) {
-          return const Text('No packages available for this route.');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Text(
+                'No packages available for this route.',
+                style: GoogleFonts.poppins(color: Colors.grey, fontStyle: FontStyle.italic),
+              ),
+            ),
+          );
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             Text(
               'Available Packages:',
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: _TravelerScreenState.darkTextBrown,
               ),
             ),
             const SizedBox(height: 10),
@@ -452,126 +496,261 @@ class _PackagesListState extends State<_PackagesList> {
               physics: const NeverScrollableScrollPhysics(),
               itemBuilder: (c, i) {
                 final d = docs[i].data() as Map<String, dynamic>;
-                return Card(
-                  color: Colors.white,
-                  child: ListTile(
-                    title: Text('#${d['id'] ?? docs[i].id} – ${d['contents']}'),
-                    subtitle: Text(
-                        'Sender: ${d['senderName']} • Category: ${d['category']} • Price: ₹${(d['price'] ?? 0).toString()}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton(
-                          child: const Text('Select'),
-                          onPressed: () async {
-                            // renamed to avoid shadowing error and added null-safety
-                            final packageCreatorUid =
-                                d['createdByUid'] as String?;
-                            if (packageCreatorUid != null) {
-                              final senderProfileDoc = await FirebaseFirestore
-                                  .instance
-                                  .collection('profiles')
-                                  .doc(packageCreatorUid)
-                                  .get();
-                              if (senderProfileDoc.exists) {
-                                final blockedUsers = List<String>.from(
-                                    senderProfileDoc.data()?['blockedUsers'] ??
-                                        []);
-                                if (blockedUsers.contains(
-                                    FirebaseAuth.instance.currentUser!.uid)) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text(
-                                        'You cannot select this package as the sender has blocked you.'),
-                                    backgroundColor: Colors.red,
-                                  ));
-                                  return;
-                                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          final packageCreatorUid = d['createdByUid'] as String?;
+                          if (packageCreatorUid != null) {
+                            final senderProfileDoc = await FirebaseFirestore
+                                .instance
+                                .collection('profiles')
+                                .doc(packageCreatorUid)
+                                .get();
+                            if (senderProfileDoc.exists) {
+                              final blockedUsers = List<String>.from(
+                                  senderProfileDoc.data()?['blockedUsers'] ??
+                                      []);
+                              if (blockedUsers.contains(
+                                  FirebaseAuth.instance.currentUser!.uid)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'You cannot select this package as the sender has blocked you.'),
+                                      backgroundColor: Colors.red,
+                                    ));
+                                return;
                               }
                             }
+                          }
 
-                            final uid = FirebaseAuth.instance.currentUser!.uid;
-                            final user = await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(uid)
-                                .get();
-                            final travelerName =
-                                user.data()?['username'] ?? 'Traveler';
-                            final travelerPhone = widget.phoneCtrl.text.trim();
+                          final uid = FirebaseAuth.instance.currentUser!.uid;
+                          final user = await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(uid)
+                              .get();
+                          final travelerName =
+                              user.data()?['username'] ?? 'Traveler';
+                          final travelerPhone = widget.phoneCtrl.text.trim();
 
-                            if (travelerPhone.isEmpty) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                content: Text(
-                                    'Please enter your phone number before selecting a package.'),
-                                backgroundColor: Colors.red,
-                              ));
-                              return;
-                            }
-
-                            await FirebaseFirestore.instance
-                                .collection('parcels')
-                                .doc(docs[i].id)
-                                .update({
-                              'assignedTravelerUid': uid,
-                              'assignedTravelerName': travelerName,
-                              'assignedTravelerPhone': travelerPhone,
-                              'status': 'selected',
-                              'updatedAt': FieldValue.serverTimestamp(),
-                            });
-
-                            // Notify sender and receiver about traveler selection
-                            final parcelDoc = await FirebaseFirestore.instance
-                                .collection('parcels')
-                                .doc(docs[i].id)
-                                .get();
-                            final parcelData =
-                                parcelDoc.data() as Map<String, dynamic>? ?? {};
-                            final senderUid =
-                                parcelData['createdByUid'] as String?;
-                            final receiverUid =
-                                parcelData['receiverUid'] as String?;
-                            final parcelContents =
-                                parcelData['contents'] as String? ??
-                                    'your package';
-
-                            if (senderUid != null) {
-                              await _firestoreService.sendNotification(
-                                recipientUid: senderUid,
-                                message:
-                                    'Your package "$parcelContents" has been selected by a traveler!',
-                                type: 'traveler_selected',
-                                parcelId: docs[i].id,
-                              );
-                            }
-                            if (receiverUid != null) {
-                              await _firestoreService.sendNotification(
-                                recipientUid: receiverUid,
-                                message:
-                                    'Your package "$parcelContents" has been selected by a traveler!',
-                                type: 'traveler_selected',
-                                parcelId: docs[i].id,
-                              );
-                            }
-
+                          if (travelerPhone.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text(
-                                        'Package added to MyTrips (Traveler)')));
+                                  content: Text(
+                                      'Please enter your phone number before selecting a package.'),
+                                  backgroundColor: Colors.red,
+                                ));
+                            return;
+                          }
 
-                            _startTracking(docs[i].id);
-                          },
+                          await FirebaseFirestore.instance
+                              .collection('parcels')
+                              .doc(docs[i].id)
+                              .update({
+                            'assignedTravelerUid': uid,
+                            'assignedTravelerName': travelerName,
+                            'assignedTravelerPhone': travelerPhone,
+                            'status': 'selected',
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          });
+
+                          final parcelDoc = await FirebaseFirestore.instance
+                              .collection('parcels')
+                              .doc(docs[i].id)
+                              .get();
+                          final parcelData =
+                              parcelDoc.data() as Map<String, dynamic>? ?? {};
+                          final senderUid =
+                              parcelData['createdByUid'] as String?;
+                          final receiverUid =
+                              parcelData['receiverUid'] as String?;
+                          final parcelContents =
+                              parcelData['contents'] as String? ?? 'your package';
+
+                          if (senderUid != null) {
+                            await _firestoreService.sendNotification(
+                              recipientUid: senderUid,
+                              message:
+                                  'Your package "$parcelContents" has been selected by a traveler!',
+                              type: 'traveler_selected',
+                              parcelId: docs[i].id,
+                            );
+                          }
+                          if (receiverUid != null) {
+                            await _firestoreService.sendNotification(
+                              recipientUid: receiverUid,
+                              message:
+                                  'Your package "$parcelContents" has been selected by a traveler!',
+                              type: 'traveler_selected',
+                              parcelId: docs[i].id,
+                            );
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Package added to MyTrips (Traveler)')));
+
+                          _startTracking(docs[i].id);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '#${d['id'] ?? docs[i].id} – ${d['contents']}',
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold,
+                                          color: _TravelerScreenState.darkTextBrown),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        'Sender: ${d['senderName']} • Category: ${d['category']}',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600)),
+                                    Text(
+                                        'Price: ₹${(d['price'] ?? 0).toString()}',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: _TravelerScreenState.accentOrange)),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.call, color: _TravelerScreenState.primaryPurple),
+                                    onPressed: () {
+                                      final phone = d['senderPhone'] as String?;
+                                      if (phone != null && phone.isNotEmpty) {
+                                        launchUrl(Uri.parse('tel:$phone'));
+                                      }
+                                    },
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      final packageCreatorUid =
+                                          d['createdByUid'] as String?;
+                                      if (packageCreatorUid != null) {
+                                        final senderProfileDoc = await FirebaseFirestore
+                                            .instance
+                                            .collection('profiles')
+                                            .doc(packageCreatorUid)
+                                            .get();
+                                        if (senderProfileDoc.exists) {
+                                          final blockedUsers = List<String>.from(
+                                              senderProfileDoc.data()?['blockedUsers'] ?? []);
+                                          if (blockedUsers.contains(
+                                              FirebaseAuth.instance.currentUser!.uid)) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                      'You cannot select this package as the sender has blocked you.'),
+                                                  backgroundColor: Colors.red,
+                                                ));
+                                            return;
+                                          }
+                                        }
+                                      }
+
+                                      final uid = FirebaseAuth.instance.currentUser!.uid;
+                                      final user = await FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(uid)
+                                          .get();
+                                      final travelerName =
+                                          user.data()?['username'] ?? 'Traveler';
+                                      final travelerPhone = widget.phoneCtrl.text.trim();
+
+                                      if (travelerPhone.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Please enter your phone number before selecting a package.'),
+                                              backgroundColor: Colors.red,
+                                            ));
+                                        return;
+                                      }
+
+                                      await FirebaseFirestore.instance
+                                          .collection('parcels')
+                                          .doc(docs[i].id)
+                                          .update({
+                                        'assignedTravelerUid': uid,
+                                        'assignedTravelerName': travelerName,
+                                        'assignedTravelerPhone': travelerPhone,
+                                        'status': 'selected',
+                                        'updatedAt': FieldValue.serverTimestamp(),
+                                      });
+
+                                      final parcelDoc = await FirebaseFirestore.instance
+                                          .collection('parcels')
+                                          .doc(docs[i].id)
+                                          .get();
+                                      final parcelData =
+                                          parcelDoc.data() as Map<String, dynamic>? ?? {};
+                                      final senderUid =
+                                          parcelData['createdByUid'] as String?;
+                                      final receiverUid =
+                                          parcelData['receiverUid'] as String?;
+                                      final parcelContents =
+                                          parcelData['contents'] as String? ?? 'your package';
+
+                                      if (senderUid != null) {
+                                        await _firestoreService.sendNotification(
+                                          recipientUid: senderUid,
+                                          message:
+                                              'Your package "$parcelContents" has been selected by a traveler!',
+                                          type: 'traveler_selected',
+                                          parcelId: docs[i].id,
+                                        );
+                                      }
+                                      if (receiverUid != null) {
+                                        await _firestoreService.sendNotification(
+                                          recipientUid: receiverUid,
+                                          message:
+                                              'Your package "$parcelContents" has been selected by a traveler!',
+                                          type: 'traveler_selected',
+                                          parcelId: docs[i].id,
+                                        );
+                                      }
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Package added to MyTrips (Traveler)')));
+
+                                      _startTracking(docs[i].id);
+                                    },
+                                    child: Text(
+                                      'Select',
+                                      style: GoogleFonts.poppins(
+                                        color: _TravelerScreenState.primaryPurple,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.call),
-                          onPressed: () {
-                            final phone = d['senderPhone'] as String?;
-                            if (phone != null && phone.isNotEmpty) {
-                              launchUrl(Uri.parse('tel:$phone'));
-                            }
-                          },
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 );

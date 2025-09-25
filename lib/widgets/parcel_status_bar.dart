@@ -1,114 +1,108 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ParcelStatusBar extends StatelessWidget {
   final String currentStatus;
 
   const ParcelStatusBar({super.key, required this.currentStatus});
 
+  // Define brand colors
+  static const Color primaryPurple = Color(0xFF514ca1);
+  static const Color accentOliveGreen = Color(0xFFa8ad5f);
+  static const Color accentOrange = Color(0xFFd79141);
+  static const Color highlightYellowOrange = Color(0xFFf8af0b);
+  static const Color neutralWarmBrown = Color(0xFF6c5050);
+
   @override
   Widget build(BuildContext context) {
     final List<String> statuses = [
-      'posted', // Changed from 'created' to 'posted' based on parcel.dart
+      'posted',
       'accepted',
-      'in_transit',
+      'in transit',
       'delivered',
     ];
 
     int currentStatusIndex = statuses.indexOf(currentStatus);
     if (currentStatusIndex == -1) {
-      currentStatusIndex = 0; // Default to first status if not found
+      currentStatusIndex = 0;
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Delivery Progress',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: neutralWarmBrown,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: statuses.map((status) {
-              int index = statuses.indexOf(status);
-              bool isActive = index <= currentStatusIndex;
-              bool isCurrent = index == currentStatusIndex;
+            children: List.generate(statuses.length, (index) {
+              final status = statuses[index];
+              final bool isActive = index <= currentStatusIndex;
+              final bool isCurrent = index == currentStatusIndex;
+              final bool isLast = index == statuses.length - 1;
 
               return Expanded(
                 child: Column(
                   children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.surfaceVariant,
-                        shape: BoxShape.circle,
-                        border: isCurrent
-                            ? Border.all(
-                                color: Theme.of(context).colorScheme.secondary,
-                                width: 2,
-                              )
-                            : null,
-                      ),
-                      child: Icon(
-                        index == 0 ? Icons.create_new_folder : // posted
-                        index == 1 ? Icons.check_circle : // accepted
-                        index == 2 ? Icons.local_shipping : // in_transit
-                        Icons.archive, // delivered
-                        color: isActive
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                        size: 14,
-                      ),
+                    Row(
+                      children: [
+                        // Status Circle
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isActive ? primaryPurple : neutralWarmBrown.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                            border: isCurrent
+                                ? Border.all(
+                                    color: accentOrange,
+                                    width: 3,
+                                  )
+                                : null,
+                          ),
+                          child: Icon(
+                            index == 0
+                                ? Icons.create_new_folder_rounded
+                                : index == 1
+                                    ? Icons.check_circle_outline_rounded
+                                    : index == 2
+                                        ? Icons.local_shipping_rounded
+                                        : Icons.archive_rounded,
+                            color: isActive ? Colors.white : neutralWarmBrown,
+                            size: 16,
+                          ),
+                        ),
+                        // Connecting Line
+                        if (!isLast)
+                          Expanded(
+                            child: Container(
+                              height: 3,
+                              color: isActive ? primaryPurple : neutralWarmBrown.withOpacity(0.2),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
+                    // Status Text
                     Text(
                       status.replaceAll('_', ' ').toCapitalized(),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isActive
-                            ? Theme.of(context).colorScheme.onBackground
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: isActive ? primaryPurple : neutralWarmBrown.withOpacity(0.7),
+                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               );
-            }).toList(),
-          ),
-          const SizedBox(height: 5),
-          Row(
-            children: List.generate(statuses.length * 2 - 1, (index) {
-              if (index.isEven) {
-                // Circle part
-                int statusIndex = index ~/ 2;
-                bool isActive = statusIndex <= currentStatusIndex;
-                return Container(
-                  width: 24,
-                  height: 2,
-                  color: isActive
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.surfaceVariant,
-                );
-              } else {
-                // Line part
-                int lineIndex = (index - 1) ~/ 2;
-                bool isActive = lineIndex < currentStatusIndex;
-                return Expanded(
-                  child: Container(
-                    height: 2,
-                    color: isActive
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surfaceVariant,
-                  ),
-                );
-              }
             }),
           ),
         ],

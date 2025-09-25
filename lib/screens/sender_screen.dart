@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/parcel.dart';
 import '../services/pricing.dart';
-import 'package:packmate/services/wallet_service.dart'; // Added
-import 'package:packmate/services/firestore_service.dart'; // Added for notifications
+import 'package:packmate/services/wallet_service.dart';
+import 'package:packmate/services/firestore_service.dart';
 
 class SenderScreen extends StatefulWidget {
   const SenderScreen({super.key});
@@ -161,11 +161,11 @@ class _SenderScreenState extends State<SenderScreen> {
 
   void _calcPrice() {
     final price = Pricing.estimate(
-      minCharge: 99,
-      baseFare: 49,
-      perKm: 7.5,
+      minCharge:30,
+      baseFare: 40,
+      perKm: 1.5,
       distanceKm: double.tryParse(_km.text) ?? 0,
-      perKg: 12.0,
+      perKg: 15,
       actualWeightKg: double.tryParse(_weight.text) ?? 0,
       lCm: double.tryParse(_len.text) ?? 0,
       wCm: double.tryParse(_wid.text) ?? 0,
@@ -273,67 +273,67 @@ class _SenderScreenState extends State<SenderScreen> {
     }
 
     final receiverUsername = _receiverId.text.trim();
-      String? receiverUid;
-      if (receiverUsername.isNotEmpty) {
-        final receiverUser =
-            await FirestoreService().getUserByUsername(receiverUsername);
-        if (receiverUser == null) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    'Receiver username not found. Please check the ID and try again.')),
-          );
-          return; // Stop submission if receiver not found
-        }
-        receiverUid = receiverUser.uid;
+    String? receiverUid;
+    if (receiverUsername.isNotEmpty) {
+      final receiverUser =
+          await FirestoreService().getUserByUsername(receiverUsername);
+      if (receiverUser == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Receiver username not found. Please check the ID and try again.')),
+        );
+        return; // Stop submission if receiver not found
       }
+      receiverUid = receiverUser.uid;
+    }
 
-      final doc = FirebaseFirestore.instance.collection('parcels').doc();
-      final now = DateTime.now();
-      final parcel = Parcel(
-        id: doc.id,
-        createdByUid: uid,
-        senderName: _senderName.text.trim(),
-        senderPhone: _senderPhone.text.trim(),
-        category: _category!,
-        pickupDate: _pickupDate!,
-        contents: _contents.text.trim(),
-        goodsValue: double.tryParse(_goodsValue.text) ?? 0,
-        photoUrls: [],
-        deadline: _deadline.value,
-        pickupPincode: _pickupPin.text.trim(),
-        pickupCity: _pickupCity.text.trim(),
-        pickupState: _pickupState.text.trim(),
-        pickupAddress: _pickupAddress.text.trim(),
-        destPincode: _destPin.text.trim(),
-        destCity: _destCity.text.trim(),
-        destState: _destState.text.trim(),
-        destAddress: _destAddress.text.trim(),
-        receiverName: _receiverName.text.trim(),
-        receiverPhone: _receiverPhone.text.trim(),
-        receiverId: _receiverId.text.trim(),
-        receiverUid: receiverUid,
-        receiverPhotoUrl: _receiverPhotoUrl,
-        weightKg: double.tryParse(_weight.text) ?? 0,
-        lengthCm: double.tryParse(_len.text) ?? 0,
-        widthCm: double.tryParse(_wid.text) ?? 0,
-        heightCm: double.tryParse(_ht.text) ?? 0,
-        distanceKm: double.tryParse(_km.text) ?? 0,
-        fragile: _fragile,
-        fastDelivery: _fast,
-        price: _estimated,
-        status: 'posted',
-        assignedTravelerUid: null,
-        assignedTravelerName: null,
-        confirmationWho: _who,
-        trackedReceiverUid: null,
-        pendingOtp: null,
-        paymentStatus: finalPaymentStatus, // Set payment status here
-        refundStatus: null,
-        createdAt: now,
-        updatedAt: now,
-      );
+    final doc = FirebaseFirestore.instance.collection('parcels').doc();
+    final now = DateTime.now();
+    final parcel = Parcel(
+      id: doc.id,
+      createdByUid: uid,
+      senderName: _senderName.text.trim(),
+      senderPhone: _senderPhone.text.trim(),
+      category: _category!,
+      pickupDate: _pickupDate!,
+      contents: _contents.text.trim(),
+      goodsValue: double.tryParse(_goodsValue.text) ?? 0,
+      photoUrls: [],
+      deadline: _deadline.value,
+      pickupPincode: _pickupPin.text.trim(),
+      pickupCity: _pickupCity.text.trim(),
+      pickupState: _pickupState.text.trim(),
+      pickupAddress: _pickupAddress.text.trim(),
+      destPincode: _destPin.text.trim(),
+      destCity: _destCity.text.trim(),
+      destState: _destState.text.trim(),
+      destAddress: _destAddress.text.trim(),
+      receiverName: _receiverName.text.trim(),
+      receiverPhone: _receiverPhone.text.trim(),
+      receiverId: _receiverId.text.trim(),
+      receiverUid: receiverUid,
+      receiverPhotoUrl: _receiverPhotoUrl,
+      weightKg: double.tryParse(_weight.text) ?? 0,
+      lengthCm: double.tryParse(_len.text) ?? 0,
+      widthCm: double.tryParse(_wid.text) ?? 0,
+      heightCm: double.tryParse(_ht.text) ?? 0,
+      distanceKm: double.tryParse(_km.text) ?? 0,
+      fragile: _fragile,
+      fastDelivery: _fast,
+      price: _estimated,
+      status: 'posted',
+      assignedTravelerUid: null,
+      assignedTravelerName: null,
+      confirmationWho: _who,
+      trackedReceiverUid: null,
+      pendingOtp: null,
+      paymentStatus: finalPaymentStatus, // Set payment status here
+      refundStatus: null,
+      createdAt: now,
+      updatedAt: now,
+    );
 
     await doc.set(parcel.toMap());
     final urls = await _uploadPhotos(doc.id);
@@ -350,7 +350,8 @@ class _SenderScreenState extends State<SenderScreen> {
       final travelerUid = tripDoc.id; // trip doc ID is the traveler UID
       await FirestoreService().sendNotification(
         recipientUid: travelerUid,
-        message: 'New package available on your route from ${_pickupCity.text.trim()} to ${_destCity.text.trim()}!',
+        message:
+            'New package available on your route from ${_pickupCity.text.trim()} to ${_destCity.text.trim()}!',
         type: 'new_package',
         parcelId: doc.id,
       );
@@ -640,7 +641,7 @@ class _SenderScreenState extends State<SenderScreen> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.grey[400]!),
+                borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
@@ -680,7 +681,7 @@ class _SenderScreenState extends State<SenderScreen> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.grey[400]!),
+                borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
@@ -702,23 +703,27 @@ class _SenderScreenState extends State<SenderScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
-            child: Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+            child: Text(label,
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
           ),
           DropdownButtonFormField<String>(
             isExpanded: true,
             value: _category,
-            hint: Text('Select Category', style: GoogleFonts.poppins(color: Colors.grey)),
+            hint: Text('Select Category',
+                style: GoogleFonts.poppins(color: Colors.grey)),
             style: GoogleFonts.poppins(color: Colors.black87),
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
                 borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: const BorderSide(color: Color(0xFF514CA1), width: 2.0),
+                borderSide:
+                    const BorderSide(color: Color(0xFF514CA1), width: 2.0),
               ),
             ),
             items: items.map((String value) {
@@ -768,7 +773,7 @@ class _SenderScreenState extends State<SenderScreen> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.grey[400]!),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -890,8 +895,8 @@ class _SenderScreenState extends State<SenderScreen> {
                     (value) {
                   setState(() => _payNowMethod = value!);
                 }),
-                _buildRadio<String>('Paytm (Simulated)', 'paytm', _payNowMethod,
-                    (value) {
+                _buildRadio<String>(
+                    'Paytm (Simulated)', 'paytm', _payNowMethod, (value) {
                   setState(() => _payNowMethod = value!);
                 }),
               ],

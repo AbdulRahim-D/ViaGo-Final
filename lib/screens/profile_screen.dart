@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:packmate/main.dart'; // Import main.dart to access _MyAppState
 
 class ProfileScreen extends StatefulWidget {
@@ -129,8 +131,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (query.docs.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Invalid username or phone number. Try again.")),
+        SnackBar(
+          content: Text(
+            "Invalid username or phone number. Try again.",
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: const Color(0xFFd79141),
+        ),
       );
       return;
     }
@@ -169,7 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile updated successfully")),
+      SnackBar(
+        content: Text(
+          "Profile updated successfully",
+          style: GoogleFonts.poppins(),
+        ),
+        backgroundColor: const Color(0xFFa8ad5f),
+      ),
     );
   }
 
@@ -177,20 +190,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _openSettings() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+      ),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            height: 5,
+            width: 40,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
           ListTile(
-            leading: const Icon(Icons.brightness_6),
-            title: const Text("Theme Mode"),
+            leading: const Icon(Icons.brightness_6, color: Color(0xFF6c5050)),
+            title: Text(
+              "Theme Mode",
+              style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+            ),
             onTap: () {
               Navigator.pop(ctx); // Close current bottom sheet
               _showThemeModeSelectionDialog(ctx);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text("Logout"),
+            leading: const Icon(Icons.logout, color: Color(0xFFd79141)),
+            title: Text(
+              "Logout",
+              style: GoogleFonts.poppins(color: const Color(0xFFd79141)),
+            ),
             onTap: () async {
               Navigator.pop(ctx);
               final prefs = await SharedPreferences.getInstance();
@@ -200,8 +232,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text("Delete Account"),
+            leading: const Icon(Icons.delete, color: Color(0xFFd79141)),
+            title: Text(
+              "Delete Account",
+              style: GoogleFonts.poppins(color: const Color(0xFFd79141)),
+            ),
             onTap: () async {
               Navigator.pop(ctx);
               final username = _usernameController.text.trim();
@@ -243,12 +278,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ThemeMode currentThemeMode = myAppState?.themeMode ?? ThemeMode.system;
 
         return AlertDialog(
-          title: const Text("Select Theme Mode"),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            "Select Theme Mode",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6c5050),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: ThemeMode.values.map((mode) {
               return RadioListTile<ThemeMode>(
-                title: Text(mode.toString().split('.').last.toCapitalized()),
+                title: Text(
+                  mode.toString().split('.').last.toCapitalized(),
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF6c5050),
+                  ),
+                ),
+                activeColor: const Color(0xFF514ca1), // Primary Purple
                 value: mode,
                 groupValue: currentThemeMode,
                 onChanged: (ThemeMode? newMode) {
@@ -263,7 +314,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text("Cancel"),
+              child: Text(
+                "Cancel",
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFFd79141),
+                ),
+              ),
             ),
           ],
         );
@@ -275,8 +331,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Profile"),
+        title: Text(
+          "Profile",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF514ca1), // Primary Purple
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -285,75 +351,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               GestureDetector(
                 onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: _imageFile != null
-                      ? FileImage(_imageFile!) as ImageProvider<Object>
-                      : (_profileImageUrl != null &&
-                              _profileImageUrl!.isNotEmpty
-                          ? NetworkImage(_profileImageUrl!)
-                              as ImageProvider<Object>
-                          : null),
-                  child: _imageFile == null &&
-                          (_profileImageUrl == null ||
-                              _profileImageUrl!.isEmpty)
-                      ? const Icon(Icons.camera_alt, size: 40)
-                      : null,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFe0e0e0),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: const Color(0xFF514ca1), width: 3),
+                  ),
+                  child: ClipOval(
+                    child: _imageFile != null
+                        ? Image.file(_imageFile!, fit: BoxFit.cover)
+                        : (_profileImageUrl != null &&
+                                _profileImageUrl!.isNotEmpty)
+                            ? Image.network(_profileImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.person, size: 60, color: Color(0xFF6c5050)))
+                            : const Icon(Icons.camera_alt,
+                                size: 40, color: Color(0xFF6c5050)),
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _buildRatingDisplay(),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: "Username"),
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Enter username" : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: "Phone Number"),
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Enter phone number" : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Name"),
-                validator: (v) => v == null || v.isEmpty ? "Enter name" : null,
-              ),
-              TextFormField(
-                controller: _ageController,
-                decoration: const InputDecoration(labelText: "Age"),
-                validator: (v) => v == null || v.isEmpty ? "Enter age" : null,
-              ),
-              TextFormField(
-                controller: _genderController,
-                decoration: const InputDecoration(labelText: "Gender"),
-                validator: (v) =>
-                    v == null || v.isEmpty ? "Enter gender" : null,
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (v) => v == null || v.isEmpty ? "Enter email" : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              const SizedBox(height: 24),
+              _buildTextFormField(
+                  _usernameController, "Username", "Enter username"),
+              const SizedBox(height: 16),
+              _buildTextFormField(
+                  _phoneController, "Phone Number", "Enter phone number"),
+              const SizedBox(height: 16),
+              _buildTextFormField(_nameController, "Name", "Enter name"),
+              const SizedBox(height: 16),
+              _buildTextFormField(_ageController, "Age", "Enter age"),
+              const SizedBox(height: 16),
+              _buildTextFormField(_genderController, "Gender", "Enter gender"),
+              const SizedBox(height: 16),
+              _buildTextFormField(_emailController, "Email", "Enter email"),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF514ca1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 5,
+                  ),
+                  child: Text(
+                    "Save",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                child: const Text("Save"),
               ),
             ],
           ),
@@ -370,18 +435,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: List.generate(5, (index) {
             return Icon(
               index < _averageRating ? Icons.star : Icons.star_border,
-              color: Colors.amber,
+              color: const Color(0xFFf8af0b), // Highlight Yellow-Orange
               size: 30,
             );
           }),
         ),
-        const SizedBox(height: 4),
-        Text('$_ratingCount reviews'),
+        const SizedBox(height: 8),
+        Text(
+          '$_ratingCount reviews',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF6c5050), // Neutral/Dark Text Warm Brown
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildTextFormField(
+      TextEditingController controller, String label, String validatorText) {
+    return TextFormField(
+      controller: controller,
+      style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+        filled: true,
+        fillColor: const Color(0xFFf5f5f5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: Color(0xFFa8ad5f), width: 2), // Accent Olive Green
+        ),
+      ),
+      validator: (v) => v == null || v.isEmpty ? validatorText : null,
     );
   }
 }
 
 extension StringExtension on String {
-  String toCapitalized() => length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
+  String toCapitalized() =>
+      length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
 }

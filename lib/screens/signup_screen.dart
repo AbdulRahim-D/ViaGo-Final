@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,7 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _startSignup() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final phone = _phoneCtrl.text.trim();
+    final phone = '+91${_phoneCtrl.text.trim()}'; // Prepend +91 to the entered number
     final username = _usernameCtrl.text.trim().toLowerCase();
     final password = _passwordCtrl.text;
 
@@ -44,9 +42,6 @@ class _SignupScreenState extends State<SignupScreen> {
       final result = await _authService.sendOtp(
         phone,
         codeSent: (verificationId, resendToken) async {
-          // The new createUser function in FirestoreService will handle all document creation
-          // after OTP verification is complete and the UID is available.
-
           if (!mounted) return;
           Navigator.of(context).pushNamed(
             '/otp',
@@ -63,7 +58,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
       if (result != null) {
-        // Web flow also defers document creation until after OTP verification
         Navigator.of(context).pushNamed(
           '/otp',
           arguments: {
@@ -86,8 +80,10 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   String? _validatePhone(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Phone required';
-    if (!v.trim().startsWith('+')) return 'Include country code (e.g., +91...)';
+    if (v == null || v.trim().isEmpty) return 'Phone number required';
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(v.trim())) {
+      return 'Enter a valid 10-digit number';
+    }
     return null;
   }
 
@@ -105,195 +101,226 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
+  static const Color primaryPurple = Color(0xFF514ca1);
+  static const Color accentOrange = Color(0xd79141);
+  static const Color highlightYellowOrange = Color(0xfff8af0b);
+  static const Color warmBrown = Color(0xFF6c5050);
+
   @override
   Widget build(BuildContext context) {
-    const purple = Color.fromARGB(255, 81, 76, 161);
-    const orange = Color.fromARGB(255, 248, 175,0);
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.15,
-              child: Image.asset(
-                'assets/images/signup_image.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  text: TextSpan(
                     children: [
-                      /// 🔥 Updated ViaGo text with shadow
-                      RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 32,
-                            letterSpacing: 1,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: 'Via',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.normal,
-                                color: purple,
-                                shadows: const [
-                                  Shadow(
-                                    offset: Offset(2, 2),
-                                    blurRadius: 4,
-                                    color: purple,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Go',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: orange,
-                                shadows: const [
-                                  Shadow(
-                                    offset: Offset(2, 2),
-                                    blurRadius: 4,
-                                    color: orange,
-                                  ),
-                                ],
-                              ),
+                      TextSpan(
+                        text: 'Via',
+                        style: GoogleFonts.poppins(
+                          fontSize: 36,
+                          fontWeight: FontWeight.normal,
+                          color: primaryPurple,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Go',
+                        style: GoogleFonts.poppins(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: highlightYellowOrange,
+                          shadows: [
+                            Shadow(
+                              color: accentOrange.withOpacity(0.5),
+                              offset: const Offset(3, 3),
+                              blurRadius: 4,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
-                      TextFormField(
-                        controller: _usernameCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          labelStyle: GoogleFonts.poppins(),
-                          prefixIcon: const Icon(Icons.person, color: purple),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        style: GoogleFonts.poppins(),
-                        validator: _validateUsername,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordCtrl,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: GoogleFonts.poppins(),
-                          prefixIcon: const Icon(Icons.lock, color: purple),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(
-                                  () => _obscurePassword = !_obscurePassword);
-                            },
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        style: GoogleFonts.poppins(),
-                        validator: _validatePassword,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneCtrl,
-                        keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(
-                          labelText: '+91 PhoneNumber',
-                          labelStyle: GoogleFonts.poppins(),
-                          prefixIcon: const Icon(Icons.phone, color: purple),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        style: GoogleFonts.poppins(),
-                        validator: _validatePhone,
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: purple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: _sendingOtp ? null : _startSignup,
-                          child: _sendingOtp
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  'Sign Up',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Already have an account?',
-                            style: GoogleFonts.poppins(),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context)
-                                  .pushReplacementNamed('/login');
-                            },
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              'Login In',
-                              style: GoogleFonts.poppins(
-                                color: orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 50),
+                Text(
+                  'Create Account',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: warmBrown,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Sign up to get started with ViaGo',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: warmBrown.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                TextFormField(
+                  controller: _usernameCtrl,
+                  style: GoogleFonts.poppins(color: warmBrown),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.person, color: accentOrange),
+                    labelText: 'Username',
+                    labelStyle: GoogleFonts.poppins(color: warmBrown),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: primaryPurple.withOpacity(0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryPurple, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  validator: _validateUsername,
+                ),
+                const SizedBox(height: 18),
+                TextFormField(
+                  controller: _passwordCtrl,
+                  obscureText: _obscurePassword,
+                  style: GoogleFonts.poppins(color: warmBrown),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock, color: accentOrange),
+                    labelText: 'Password',
+                    labelStyle: GoogleFonts.poppins(color: warmBrown),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        color: warmBrown.withOpacity(0.5),
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: primaryPurple.withOpacity(0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryPurple, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  validator: _validatePassword,
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    // Static +91 Text
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: primaryPurple.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(12),
+                        color: warmBrown.withOpacity(0.1)
+                      ),
+                      height: 54, // Match TextFormField height
+                      alignment: Alignment.center,
+                      child: Text(
+                        '+91',
+                        style: GoogleFonts.poppins(
+                          color: warmBrown,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Phone Number Input
+                    Expanded(
+                      child: TextFormField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        style: GoogleFonts.poppins(color: warmBrown),
+                        decoration: InputDecoration(
+                          labelText: 'Phone Number',
+                          labelStyle: GoogleFonts.poppins(color: warmBrown),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: primaryPurple.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: primaryPurple, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: _validatePhone,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryPurple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 8,
+                      shadowColor: primaryPurple.withOpacity(0.3),
+                    ),
+                    onPressed: _sendingOtp ? null : _startSignup,
+                    child: _sendingOtp
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(
+                            'Sign Up',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Already have an account? ',
+                      style: GoogleFonts.poppins(
+                        color: warmBrown,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed('/login');
+                      },
+                      child: Text(
+                        'Login In',
+                        style: GoogleFonts.poppins(
+                          color: highlightYellowOrange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

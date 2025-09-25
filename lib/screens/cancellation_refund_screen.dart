@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:packmate/models/parcel.dart';
 import 'package:packmate/services/firestore_service.dart';
 import 'package:packmate/services/wallet_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CancellationRefundScreen extends StatefulWidget {
   const CancellationRefundScreen({super.key});
@@ -33,17 +34,34 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
     final bool confirm = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Confirm Refund'),
+            title: Text(
+              'Confirm Refund',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
             content: Text(
-                'Are you sure you want to refund ₹${parcel.price.toStringAsFixed(2)} to your wallet?'),
+              'Are you sure you want to refund ₹${parcel.price.toStringAsFixed(2)} to your wallet?',
+              style: GoogleFonts.poppins(),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+                ),
               ),
-              TextButton(
+              ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Refund'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFd79141),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  'Refund',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -57,7 +75,9 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) => const Center(child: CircularProgressIndicator(
+          color: Color(0xFFf8af0b),
+        )),
       );
     }
 
@@ -75,9 +95,12 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Refund processed successfully!'),
-              backgroundColor: Colors.green),
+          SnackBar(
+              content: Text(
+                'Refund processed successfully!',
+                style: GoogleFonts.poppins(),
+              ),
+              backgroundColor: const Color(0xFFa8ad5f)),
         );
       }
     } catch (e) {
@@ -87,8 +110,11 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error processing refund: $e'),
-              backgroundColor: Colors.red),
+              content: Text(
+                'Error processing refund: $e',
+                style: GoogleFonts.poppins(),
+              ),
+              backgroundColor: const Color(0xFFd79141)),
         );
       }
     }
@@ -98,31 +124,65 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
   Widget build(BuildContext context) {
     if (currentUser == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Cancellation & Refund")),
-        body: const Center(child: Text('Please log in to view this page.')),
+        appBar: AppBar(
+          title: Text(
+            "Cancellation & Refund",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: const Color(0xFF514ca1),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Text(
+            'Please log in to view this page.',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: const Color(0xFF6c5050),
+            ),
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Cancellation & Refund"),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        title: Text(
+          "Cancellation & Refund",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF514ca1),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<List<Parcel>>(
         stream: _firestoreService.streamMyCancelledParcelsAsSender(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(color: Color(0xFFf8af0b)));
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+                child: Text(
+              'Error: ${snapshot.error}',
+              style: GoogleFonts.poppins(),
+            ));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 'You have no cancelled packages.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: const Color(0xFF6c5050),
+                ),
               ),
             );
           }
@@ -131,54 +191,103 @@ class _CancellationRefundScreenState extends State<CancellationRefundScreen> {
 
           return ListView.builder(
             itemCount: cancelledParcels.length,
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
             itemBuilder: (context, index) {
               final parcel = cancelledParcels[index];
               final bool wasPaid = parcel.paymentStatus == 'paid';
               final bool isRefunded = parcel.refundStatus == 'refunded';
 
               return Card(
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12.0),
-                  title: Text(
-                    'Parcel: ${parcel.contents}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                color: Colors.white,
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
                     children: [
-                      const SizedBox(height: 4),
-                      Text('To: ${parcel.receiverName}'),
-                      Text('Price: ₹${parcel.price.toStringAsFixed(2)}'),
-                      Text('Status: ${parcel.status}'),
-                      if (wasPaid)
-                        Text('Payment: Paid', style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold)),
-                      if (!wasPaid)
-                        Text('Payment: Not Paid', style: TextStyle(color: Colors.orange[700], fontWeight: FontWeight.bold)),
-                      if (isRefunded)
-                        Text('Refund: Processed', style: TextStyle(color: Colors.blue[700])),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Parcel: ${parcel.contents}',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF6c5050)),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'To: ${parcel.receiverName}',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6c5050)),
+                            ),
+                            Text(
+                              'Price: ₹${parcel.price.toStringAsFixed(2)}',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6c5050)),
+                            ),
+                            Text(
+                              'Status: ${parcel.status}',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6c5050)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (wasPaid)
+                            Chip(
+                              label: Text(
+                                'Paid',
+                                style: GoogleFonts.poppins(color: Colors.white),
+                              ),
+                              backgroundColor: const Color(0xFFa8ad5f), // Accent Olive Green
+                            )
+                          else
+                            Chip(
+                              label: Text(
+                                'Not Paid',
+                                style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+                              ),
+                              backgroundColor: const Color(0xFFf8af0b), // Highlight Yellow-Orange
+                            ),
+                          const SizedBox(height: 8),
+                          if (wasPaid && !isRefunded)
+                            ElevatedButton(
+                              onPressed: () => _processRefund(parcel),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFd79141), // Accent Orange
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text(
+                                'Refund',
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          else if (wasPaid && isRefunded)
+                            Chip(
+                              label: Text(
+                                'Refunded',
+                                style: GoogleFonts.poppins(color: Colors.white),
+                              ),
+                              backgroundColor: const Color(0xFFa8ad5f), // Accent Olive Green
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                  trailing: wasPaid && !isRefunded
-                      ? ElevatedButton(
-                          onPressed: () => _processRefund(parcel),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                          child: const Text('Refund'),
-                        )
-                      : wasPaid && isRefunded
-                          ? const Chip(
-                              label: Text('Refunded'),
-                              backgroundColor: Colors.grey,
-                            )
-                          : const Chip(
-                              label: Text('Not Paid'),
-                              backgroundColor: Colors.transparent,
-                              shape: StadiumBorder(side: BorderSide(color: Colors.grey)),
-                            ),
                 ),
               );
             },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:packmate/models/review.dart';
 
 class LeaveReviewScreen extends StatefulWidget {
@@ -25,6 +26,12 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   final _reviewController = TextEditingController();
   bool _isSubmitting = false;
 
+  final Color _primaryPurple = const Color(0xFF514ca1);
+  final Color _accentOliveGreen = const Color(0xFFa8ad5f);
+  final Color _accentOrange = const Color(0xFFd79141);
+  final Color _highlightYellowOrange = const Color(0xFFf8af0b);
+  final Color _neutralWarmBrown = const Color(0xFF6c5050);
+
   Future<void> _submitReview() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +55,8 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
         createdAt: DateTime.now(),
       );
 
-      final profileRef = FirebaseFirestore.instance.collection('profiles').doc(widget.toUid);
+      final profileRef =
+          FirebaseFirestore.instance.collection('profiles').doc(widget.toUid);
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final profileSnapshot = await transaction.get(profileRef);
@@ -62,7 +70,8 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
           });
         } else {
           final currentRatingCount = profileSnapshot.data()!['ratingCount'] ?? 0;
-          final currentTotalRating = profileSnapshot.data()!['totalRating'] ?? 0.0;
+          final currentTotalRating =
+              profileSnapshot.data()!['totalRating'] ?? 0.0;
 
           final newRatingCount = currentRatingCount + 1;
           final newTotalRating = currentTotalRating + _rating;
@@ -79,7 +88,8 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       });
 
       // Mark this user as having reviewed this parcel interaction
-      final parcelRef = FirebaseFirestore.instance.collection('parcels').doc(widget.parcelId);
+      final parcelRef =
+          FirebaseFirestore.instance.collection('parcels').doc(widget.parcelId);
       await parcelRef.update({
         'reviewsGiven.${widget.fromUid}': true,
       });
@@ -106,50 +116,125 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Leave a Review'),
+        title: Text(
+          'Leave a Review',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: _primaryPurple,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Rating:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            // Rating section
+            Text(
+              'Your Rating',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: _neutralWarmBrown,
+              ),
+            ),
+            const SizedBox(height: 16),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _rating ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
-                    size: 40,
-                  ),
-                  onPressed: () {
+                return GestureDetector(
+                  onTap: () {
                     setState(() {
                       _rating = index + 1.0;
                     });
                   },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Icon(
+                      index < _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: _highlightYellowOrange,
+                      size: 48,
+                    ),
+                  ),
                 );
               }),
             ),
-            const SizedBox(height: 20),
-            const Text('Review:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 40),
+
+            // Review text field
+            Text(
+              'Your Review',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: _neutralWarmBrown,
+              ),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _reviewController,
               maxLines: 5,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              style: GoogleFonts.poppins(
+                color: _neutralWarmBrown,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey.shade100,
                 hintText: 'Share your experience...',
+                hintStyle: GoogleFonts.poppins(
+                  color: _neutralWarmBrown.withOpacity(0.6),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: _accentOrange,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.all(16),
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitReview,
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Submit Review'),
+            const SizedBox(height: 40),
+
+            // Submit button
+            ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitReview,
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _accentOliveGreen,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                shadowColor: _accentOliveGreen.withOpacity(0.5),
               ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Submit Review',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ],
         ),

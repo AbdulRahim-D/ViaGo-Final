@@ -15,6 +15,13 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
   final _phone = TextEditingController();
   final _rid = TextEditingController();
 
+  // Define brand colors
+  static const Color primaryPurple = Color(0xFF514ca1);
+  static const Color accentOliveGreen = Color(0xFFA8AD5F);
+  static const Color accentOrange = Color(0xFFd79141);
+  static const Color highlightYellowOrange = Color(0xFFf8af0b);
+  static const Color neutralWarmBrown = Color(0xFF6c5050);
+
   @override
   void dispose() {
     _name.dispose();
@@ -26,8 +33,10 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFA8AD5F),
+        backgroundColor: accentOliveGreen,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -44,52 +53,52 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          _buildCard(
-            title: 'Parcel Details:',
-            children: [
-              _buildInput('Name:', _name, hint: 'Full Name'),
-              _buildInput('Phone Number:', _phone, hint: '+91 XXXXXXXXXX', type: TextInputType.phone),
-              _buildInput('Receiver ID:', _rid, hint: 'Unique ID'),
-              const SizedBox(height: 8),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  '(Enter the receiver details set by the sender while updating the parcel.)',
-                  style: TextStyle(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildCard(
+              title: 'Parcel Details',
+              children: [
+                _buildInput('Full Name', _name, hint: 'e.g., Jane Doe'),
+                _buildInput('Phone Number', _phone, hint: 'e.g., +91 9876543210', type: TextInputType.phone),
+                _buildInput('Receiver ID', _rid, hint: 'e.g., VIA-12345'),
+                const SizedBox(height: 12),
+                Text(
+                  '(Enter the receiver details set by the sender to find your parcel.)',
+                  style: GoogleFonts.poppins(
                     fontStyle: FontStyle.italic,
-                    color: Colors.grey,
+                    fontSize: 12,
+                    color: neutralWarmBrown.withOpacity(0.6),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
+              ],
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFA8AD5F),
+                backgroundColor: accentOliveGreen,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                elevation: 6,
+                shadowColor: neutralWarmBrown.withOpacity(0.2),
               ),
               onPressed: () => setState(() {}),
               child: Text(
                 'Find My Parcel',
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          _results(_name.text.trim(), _phone.text.trim(), _rid.text.trim()),
-        ]),
+            const SizedBox(height: 24),
+            _results(_name.text.trim(), _phone.text.trim(), _rid.text.trim()),
+          ],
+        ),
       ),
     );
   }
@@ -100,12 +109,12 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
         side: const BorderSide(
-          color: Color(0xFFA8AD5F),
-          width: 4.0,
+          color: accentOliveGreen,
+          width: 2.0,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -114,10 +123,10 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFA8AD5F),
+                color: accentOliveGreen,
               ),
             ),
-            const Divider(color: Color(0xFFA8AD5F)),
+            const Divider(color: accentOliveGreen, height: 24),
             ...children,
           ],
         ),
@@ -129,32 +138,36 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             flex: 2,
             child: Text(
               label,
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: neutralWarmBrown),
             ),
           ),
+          const SizedBox(width: 16),
           Expanded(
             flex: 3,
             child: TextFormField(
               controller: c,
               keyboardType: type,
-              style: GoogleFonts.poppins(),
+              style: GoogleFonts.poppins(color: neutralWarmBrown),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                hintStyle: GoogleFonts.poppins(color: neutralWarmBrown.withOpacity(0.4)),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                filled: true,
+                fillColor: neutralWarmBrown.withOpacity(0.05),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color(0xFFA8AD5F), width: 2.0),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: accentOliveGreen, width: 2.0),
                 ),
               ),
             ),
@@ -174,9 +187,24 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: q.snapshots(),
       builder: (c, s) {
-        if (!s.hasData) return const SizedBox();
+        if (!s.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final docs = s.data!.docs;
-        if (docs.isEmpty) return const Text('No matching parcel');
+        if (docs.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0),
+              child: Text(
+                'No matching parcel found.',
+                style: GoogleFonts.poppins(
+                  fontStyle: FontStyle.italic,
+                  color: neutralWarmBrown.withOpacity(0.7),
+                ),
+              ),
+            ),
+          );
+        }
         return ListView.builder(
           itemCount: docs.length,
           shrinkWrap: true,
@@ -184,12 +212,27 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
           itemBuilder: (c, i) {
             final d = docs[i].data() as Map<String, dynamic>;
             return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
               child: ListTile(
-                title: Text('#${d['id']} – ${d['contents']}'),
+                title: Text(
+                  '#${d['id']} – ${d['contents']}',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: primaryPurple),
+                ),
                 subtitle: Text(
-                    'Sender: ${d['senderName']}  Traveler: ${d['assignedTravelerName'] ?? '—'}  Cost: ₹${d['price']}'),
+                  'Sender: ${d['senderName']} • Traveler: ${d['assignedTravelerName'] ?? '—'} • Cost: ₹${d['price']}',
+                  style: GoogleFonts.poppins(fontSize: 12, color: neutralWarmBrown.withOpacity(0.8)),
+                ),
                 trailing: TextButton(
-                  child: const Text('View'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: primaryPurple,
+                    padding: EdgeInsets.zero,
+                  ),
+                  child: Text(
+                    'View',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => _showDetails(context, docs[i].id),
                 ),
               ),
@@ -204,40 +247,51 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) {
-        final ref =
-            FirebaseFirestore.instance.collection('parcels').doc(parcelId);
+        final ref = FirebaseFirestore.instance.collection('parcels').doc(parcelId);
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24.0),
           child: StreamBuilder<DocumentSnapshot>(
             stream: ref.snapshots(),
             builder: (c, s) {
               if (!s.hasData) {
                 return const SizedBox(
-                    height: 200,
-                    child: Center(child: CircularProgressIndicator()));
+                    height: 200, child: Center(child: CircularProgressIndicator()));
               }
               final p = s.data!.data() as Map<String, dynamic>;
               return Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Package #${p['id']} – ${p['contents']}',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   Text(
-                      'Pickup: ${p['pickupCity']} • Destination: ${p['destCity']}'),
-                  Text(
-                      'Traveler: ${p['assignedTravelerName'] ?? 'Not selected'}'),
+                    'Package #${p['id']} – ${p['contents']}',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: neutralWarmBrown,
+                    ),
+                  ),
                   const SizedBox(height: 8),
+                  Text(
+                    'Pickup: ${p['pickupCity']} • Destination: ${p['destCity']}',
+                    style: GoogleFonts.poppins(fontSize: 14, color: neutralWarmBrown.withOpacity(0.8)),
+                  ),
+                  Text(
+                    'Traveler: ${p['assignedTravelerName'] ?? 'Not selected'}',
+                    style: GoogleFonts.poppins(fontSize: 14, color: neutralWarmBrown.withOpacity(0.8)),
+                  ),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () async {
-                      // When receiver starts tracking, mark parcel.trackedReceiverUid so it appears in Receiver's MyTrip
                       final uid = FirebaseAuth.instance.currentUser?.uid;
                       if (uid == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content:
-                                    Text('You must be signed in to track')));
+                                content: Text('You must be signed in to track')));
                         return;
                       }
                       await FirebaseFirestore.instance
@@ -255,23 +309,32 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text('Start Tracking (Add to MyTrip)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentOliveGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      elevation: 4,
+                      shadowColor: neutralWarmBrown.withOpacity(0.2),
+                    ),
+                    child: Text(
+                      'Start Tracking (Add to MyTrip)',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () async {
-                      // If receiver chosen for delivery confirmation, they may request delivery OTP to themselves
                       final snap = await FirebaseFirestore.instance
                           .collection('parcels')
                           .doc(parcelId)
                           .get();
                       final data = snap.data() as Map<String, dynamic>;
                       if (data['confirmationWho'] == 'receiver') {
-                        final uid = FirebaseAuth.instance.currentUser?.uid ??
-                            data['createdByUid'];
-                        final otp = (100000 +
-                                (DateTime.now().millisecondsSinceEpoch %
-                                    900000))
+                        final uid = FirebaseAuth.instance.currentUser?.uid ?? data['createdByUid'];
+                        final otp = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
                             .toString()
                             .substring(0, 6);
                         await FirebaseFirestore.instance
@@ -312,8 +375,20 @@ class _ReceiverScreenState extends State<ReceiverScreen> {
                         }
                       }
                     },
-                    child: const Text(
-                        'Get Delivery OTP (if you are chosen to confirm)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      elevation: 4,
+                      shadowColor: neutralWarmBrown.withOpacity(0.2),
+                    ),
+                    child: Text(
+                      'Get Delivery OTP',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ],
               );

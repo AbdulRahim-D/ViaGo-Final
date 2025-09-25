@@ -28,8 +28,8 @@ class Pricing {
             : volumetricWeightKg(lCm: lCm, wCm: wCm, hCm: hCm);
 
     double extras = 0;
-    if (fragile) extras += 49;
-    if (fast) extras += 79;
+    if (fragile) extras += 30;
+    if (fast) extras += 40;
 
     final raw = baseFare + (perKm * distanceKm) + (perKg * billable) + extras;
     final basePrice = raw < minCharge ? minCharge : double.parse(raw.toStringAsFixed(2));

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -16,27 +17,98 @@ class NotificationsScreen extends StatelessWidget {
         .snapshots();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          'Notifications',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF514ca1), // Primary Purple
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: stream,
-        builder: (c, s) {
-          if (!s.hasData) {
-            return const Center(child: CircularProgressIndicator());
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFf8af0b), // Highlight Yellow-Orange
+              ),
+            );
           }
-          final docs = s.data!.docs;
-          if (docs.isEmpty) {
-            return const Center(child: Text('No notifications yet'));
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text(
+                'No notifications yet',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: const Color(0xFF6c5050),
+                ),
+              ),
+            );
           }
+          final docs = snapshot.data!.docs;
           return ListView.builder(
             itemCount: docs.length,
-            itemBuilder: (c, i) {
-              final d = docs[i].data() as Map<String, dynamic>;
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            itemBuilder: (context, index) {
+              final d = docs[index].data() as Map<String, dynamic>;
+              final type = d['type'] ?? '';
+              final showCode = type.toLowerCase() == 'confirm' || type.toLowerCase() == 'delivery';
+
+              // Determine the title text based on the type
+              final titleText = showCode ? 'OTP for ${d['type']}' : d['type'];
+
               return Card(
-                child: ListTile(
-                  title: Text('OTP for ${d['type']}'),
-                  subtitle:
-                      Text('Parcel: ${d['parcelId']} • Code: ${d['code']}'),
-                  trailing: Text(d['status'] ?? 'sent'),
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              titleText,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: const Color(0xFF6c5050),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Parcel: ${d['parcelId']}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: const Color(0xFF6c5050).withOpacity(0.8),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            if (showCode)
+                              Text(
+                                'Code: ${d['code']}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFFd79141), // Accent Orange
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

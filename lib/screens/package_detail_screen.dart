@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart'; // ✅ Added for typography
 import 'package:packmate/screens/chat_screen.dart';
 import 'package:packmate/services/firestore_service.dart';
 import 'package:packmate/services/storage_service.dart';
-import 'package:packmate/services/pricing.dart'; // Added
-import 'package:packmate/services/wallet_service.dart'; // Added
+import 'package:packmate/services/pricing.dart';
+import 'package:packmate/services/wallet_service.dart';
 import 'otp_confirm_screen.dart';
 import 'otp_delivery_screen.dart';
-import 'package:packmate/screens/receiver_payment_screen.dart'; // Added
-import 'package:packmate/widgets/parcel_status_bar.dart'; // Added
+import 'package:packmate/screens/receiver_payment_screen.dart';
+import 'package:packmate/widgets/parcel_status_bar.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,10 +19,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:packmate/models/report.dart';
 import 'package:packmate/screens/leave_review_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Added for FirebaseAuth.instance.currentUser
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // ✅ Added import
+import 'package:firebase_storage/firebase_storage.dart';
+
+// 🎨 ViaGo Color Palette
+const kPrimaryPurple = Color(0xFF514ca1);
+const kAccentOliveGreen = Color(0xFFa8ad5f);
+const kAccentOrange = Color(0xFFd79141);
+const kHighlightYellowOrange = Color(0xFFf8af0b);
+const kNeutralWarmBrown = Color(0xFF6c5050);
 
 class PackageDetailScreen extends StatefulWidget {
   final String parcelId;
@@ -42,7 +50,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   final StorageService _storageService = StorageService();
   final FirestoreService _firestoreService = FirestoreService();
-  late final WalletService _walletService; // Initialized here
+  late final WalletService _walletService;
 
   bool _isRecording = false;
   bool _isPlaying = false;
@@ -102,9 +110,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
         await _storageService.uploadVoiceNote(_filePath!, widget.parcelId);
     await _firestoreService
         .updateParcel(widget.parcelId, {'voiceNoteUrl': downloadUrl});
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Voice note uploaded!')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Voice note uploaded!')),
+      );
+    }
   }
 
   Future<void> _playVoiceNote(Map<String, dynamic> parcel) async {
@@ -137,9 +147,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not launch phone call to $phoneNumber')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch phone call to $phoneNumber')),
+        );
+      }
     }
   }
 
@@ -161,7 +173,19 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Package #${widget.parcelId}")),
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text(
+          "Package #${widget.parcelId.substring(0, 8)}...",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: kNeutralWarmBrown,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: kNeutralWarmBrown),
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('parcels')
@@ -185,247 +209,383 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           final travelerName = parcel['assignedTravelerName'] ?? 'Traveler';
           final receiverName = parcel['receiverName'] ?? 'Receiver';
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: ListView(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Contents: ${parcel['contents']}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Sender: $senderName (${parcel['senderPhone']})'),
-                    if (isTraveler || isReceiver)
-                      IconButton(
-                        icon: const Icon(Icons.phone),
-                        onPressed: () => _makePhoneCall(parcel['senderPhone']),
-                      ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        'Receiver: $receiverName (${parcel['receiverPhone']})'),
-                    if (isSender || isTraveler)
-                      IconButton(
-                        icon: const Icon(Icons.phone),
-                        onPressed: () =>
-                            _makePhoneCall(parcel['receiverPhone']),
-                      ),
-                  ],
-                ),
-                if (travelerId != null)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                          'Traveler: $travelerName (${parcel['assignedTravelerPhone'] ?? ''})'),
-                      if ((isSender || isReceiver) &&
-                          parcel['assignedTravelerPhone'] != null)
-                        IconButton(
-                          icon: const Icon(Icons.phone),
-                          onPressed: () =>
-                              _makePhoneCall(parcel['assignedTravelerPhone']),
+                        'Contents: ${parcel['contents']}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: kNeutralWarmBrown,
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                          'Sender:', '$senderName (${parcel['senderPhone']})',
+                          () {
+                        if (isTraveler || isReceiver) {
+                          _makePhoneCall(parcel['senderPhone']);
+                        }
+                      }),
+                      _buildInfoRow('Receiver:',
+                          '$receiverName (${parcel['receiverPhone']})', () {
+                        if (isSender || isTraveler) {
+                          _makePhoneCall(parcel['receiverPhone']);
+                        }
+                      }),
+                      if (travelerId != null)
+                        _buildInfoRow(
+                            'Traveler:',
+                            '$travelerName (${parcel['assignedTravelerPhone'] ?? ''})',
+                            () {
+                          if ((isSender || isReceiver) &&
+                              parcel['assignedTravelerPhone'] != null) {
+                            _makePhoneCall(parcel['assignedTravelerPhone']);
+                          }
+                        }),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pickup: ${parcel['pickupCity']}',
+                        style: GoogleFonts.poppins(color: kNeutralWarmBrown),
+                      ),
+                      Text(
+                        'Destination: ${parcel['destCity']}',
+                        style: GoogleFonts.poppins(color: kNeutralWarmBrown),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Price: ₹${parcel['price']}',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryPurple),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Status: ${parcel['status'].toString().replaceAll('_', ' ')}',
+                        style: GoogleFonts.poppins(
+                            fontStyle: FontStyle.italic,
+                            color: kNeutralWarmBrown),
+                      ),
                     ],
                   ),
-                Text(
-                    'Pickup: ${parcel['pickupCity']} → Destination: ${parcel['destCity']}'),
-                Text('Price: ₹${parcel['price']}'),
-                Text('Status: ${parcel['status']}'),
-                const Divider(height: 24),
+                ),
+                const SizedBox(height: 24),
 
                 // Parcel Status Bar
-                ParcelStatusBar(currentStatus: parcel['status']),
-                const Divider(height: 24),
+                _buildCard(
+                  child: ParcelStatusBar(currentStatus: parcel['status']),
+                ),
+                const SizedBox(height: 24),
 
                 // Map View
-                // --- Replace the existing FlutterMap / MarkerLayer block with this ---
                 if ((isSender || isReceiver) &&
                     parcel['latitude'] != null &&
                     parcel['longitude'] != null)
-                  SizedBox(
-                    height: 200,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        center: LatLng(
-                          (parcel['latitude'] ?? 0).toDouble(),
-                          (parcel['longitude'] ?? 0).toDouble(),
+                  _buildCard(
+                    child: SizedBox(
+                      height: 200,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          center: LatLng(
+                            (parcel['latitude'] ?? 0).toDouble(),
+                            (parcel['longitude'] ?? 0).toDouble(),
+                          ),
+                          zoom: 15.0,
                         ),
-                        zoom: 15.0,
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            subdomains: const ['a', 'b', 'c'],
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                width: 80.0,
+                                height: 80.0,
+                                point: LatLng(
+                                  (parcel['latitude'] ?? 0).toDouble(),
+                                  (parcel['longitude'] ?? 0).toDouble(),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.red,
+                                  size: 40.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                          subdomains: const ['a', 'b', 'c'],
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
+
+                // Communications
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Communications',
+                        style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: kNeutralWarmBrown),
+                      ),
+                      const SizedBox(height: 12),
+                      if (isSender) _buildVoiceNoteRecorder(),
+                      if (isTraveler && parcel['voiceNoteUrl'] != null)
+                        _buildVoiceNotePlayer(parcel),
+                      const SizedBox(height: 16),
+                      if (isSender && travelerId != null)
+                        _buildButton(
+                          onPressed: () => _chatWith(travelerId, travelerName),
+                          label: 'Chat with Traveler',
+                          icon: Icons.chat,
+                          color: kPrimaryPurple,
                         ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              width: 80.0,
-                              height: 80.0,
-                              point: LatLng(
-                                (parcel['latitude'] ?? 0).toDouble(),
-                                (parcel['longitude'] ?? 0).toDouble(),
-                              ),
-                              // use `child` (not `builder`) for recent flutter_map versions
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.red,
-                                size: 40.0,
-                              ),
-                            ),
-                          ],
+                      if (isTraveler) ...[
+                        _buildButton(
+                          onPressed: () => _chatWith(senderId, senderName),
+                          label: 'Chat with Sender',
+                          icon: Icons.chat,
+                          color: kPrimaryPurple,
+                        ),
+                        _buildButton(
+                          onPressed: receiverId != null
+                              ? () => _chatWith(receiverId, receiverName)
+                              : null,
+                          label: 'Chat with Receiver',
+                          icon: Icons.chat,
+                          color: kPrimaryPurple,
+                        ),
+                      ],
+                      if (isReceiver && travelerId != null)
+                        _buildButton(
+                          onPressed: () => _chatWith(travelerId, travelerName),
+                          label: 'Chat with Traveler',
+                          icon: Icons.chat,
+                          color: kPrimaryPurple,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Delivery Proof
+                if (isTraveler && parcel['status'] == 'in_transit')
+                  _buildButton(
+                    onPressed: () => _uploadDeliveryProof(parcel),
+                    label: 'Upload Delivery Proof',
+                    icon: Icons.camera_alt,
+                    color: kAccentOliveGreen,
+                  ),
+                if (parcel['deliveryProofUrl'] != null)
+                  _buildCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Delivery Proof:',
+                          style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: kNeutralWarmBrown),
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(parcel['deliveryProofUrl']),
                         ),
                       ],
                     ),
                   ),
 
-                // Voice Note UI
-                if (isSender) _buildVoiceNoteRecorder(),
-                if (isTraveler && parcel['voiceNoteUrl'] != null)
-                  _buildVoiceNotePlayer(parcel),
+                const SizedBox(height: 24),
 
-                // Delivery Proof
-                if (isTraveler && parcel['status'] == 'in_transit')
-                  _buildDeliveryProofUploader(parcel),
-                if (parcel['deliveryProofUrl'] != null)
-                  _buildDeliveryProofViewer(parcel),
-
-                // Communications
-                const Text('Communications',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                if (isSender && travelerId != null)
-                  ElevatedButton(
-                    onPressed: () => _chatWith(travelerId, travelerName),
-                    child: const Text('Chat with Traveler'),
-                  ),
-                if (isTraveler) ...[
-                  ElevatedButton(
-                    onPressed: () => _chatWith(senderId, senderName),
-                    child: const Text('Chat with Sender'),
-                  ),
-                  ElevatedButton(
-                    onPressed: receiverId != null
-                        ? () => _chatWith(receiverId, receiverName)
-                        : null,
-                    child: const Text('Chat with Receiver'),
-                  ),
-                ],
-                if (isReceiver && travelerId != null)
-                  ElevatedButton(
-                    onPressed: () => _chatWith(travelerId, travelerName),
-                    child: const Text('Chat with Traveler'),
-                  ),
-
-                const Divider(height: 24),
-
-                // Review Button
-                _buildReviewButton(context, parcel),
-
-                const SizedBox(height: 16),
-
-                // Report Buttons
-                _buildReportButtons(context, parcel),
-
-                const SizedBox(height: 16),
-
-                // Block Buttons
-                _buildBlockButtons(context, parcel),
-
-                const SizedBox(height: 16),
-
-                // Cancel Button
-                _buildCancelButton(context, parcel),
-
-                if (widget.role == 'traveler') ...[
-                  // Show "Confirm Order" button ONLY when the parcel is 'selected'
-                  if (parcel['status'] == 'selected')
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                OtpConfirmScreen(parcelId: widget.parcelId),
+                // Action Buttons
+                _buildCard(
+                  child: Column(
+                    children: [
+                      _buildReviewButton(context, parcel),
+                      _buildReportButtons(context, parcel),
+                      _buildBlockButtons(context, parcel),
+                      _buildCancelButton(context, parcel),
+                      if (widget.role == 'traveler') ...[
+                        if (parcel['status'] == 'selected')
+                          _buildButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      OtpConfirmScreen(parcelId: widget.parcelId),
+                                ),
+                              );
+                            },
+                            label: "Confirm Order (OTP from Sender)",
+                            icon: Icons.verified_user,
+                            color: kAccentOliveGreen,
                           ),
-                        );
-                      },
-                      child: const Text("Confirm Order (OTP from Sender)"),
-                    ),
-
-                  // Show "Request Payment" button ONLY when parcel is 'in_transit' AND payment is 'pending_on_delivery'
-                  if (parcel['status'] == 'in_transit' &&
-                      parcel['paymentStatus'] == 'pending_on_delivery')
-                    ElevatedButton(
-                      onPressed: () async {
-                        await _firestoreService.updateParcel(widget.parcelId, {
-                          'status': 'awaiting_receiver_payment',
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Payment request sent to the receiver.')),
-                        );
-                      },
-                      child: const Text("Request Payment from Receiver"),
-                    ),
-
-                  // Show "Waiting for Receiver to Pay" ONLY when status is 'awaiting_receiver_payment'
-                  if (parcel['status'] == 'awaiting_receiver_payment')
-                    const ElevatedButton(
-                      onPressed: null,
-                      child: Text("Waiting for Receiver to Pay"),
-                    ),
-
-                  // Show "Send OTP for Delivery" ONLY when parcel is 'in_transit' AND payment is 'paid'
-                  if (parcel['status'] == 'in_transit' &&
-                      parcel['paymentStatus'] == 'paid')
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                OtpDeliveryScreen(parcelId: widget.parcelId),
+                        if (parcel['status'] == 'in_transit' &&
+                            parcel['paymentStatus'] == 'pending_on_delivery')
+                          _buildButton(
+                            onPressed: () async {
+                              await _firestoreService.updateParcel(widget.parcelId, {
+                                'status': 'awaiting_receiver_payment',
+                              });
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Payment request sent to the receiver.')),
+                                );
+                              }
+                            },
+                            label: "Request Payment from Receiver",
+                            icon: Icons.monetization_on,
+                            color: kAccentOliveGreen,
                           ),
-                        );
-                      },
-                      child: const Text("Proceed to Delivery OTP"),
-                    ),
-                ],
-
-                // Receiver's Payment Button
-                if (widget.role == 'receiver' &&
-                    parcel['status'] == 'awaiting_receiver_payment')
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ReceiverPaymentScreen(
-                            parcelId: widget.parcelId,
-                            receiverUid: parcel['receiverUid'],
-                            senderUid: parcel['createdByUid'],
-                            amount: (parcel['price'] ?? 0.0).toDouble(),
+                        if (parcel['status'] == 'awaiting_receiver_payment')
+                          _buildButton(
+                            onPressed: null,
+                            label: "Waiting for Receiver to Pay",
+                            icon: Icons.hourglass_empty,
                           ),
+                        if (parcel['status'] == 'in_transit' &&
+                            parcel['paymentStatus'] == 'paid')
+                          _buildButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      OtpDeliveryScreen(parcelId: widget.parcelId),
+                                ),
+                              );
+                            },
+                            label: "Proceed to Delivery OTP",
+                            icon: Icons.delivery_dining,
+                            color: kAccentOliveGreen,
+                          ),
+                      ],
+                      if (widget.role == 'receiver' &&
+                          parcel['status'] == 'awaiting_receiver_payment')
+                        _buildButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReceiverPaymentScreen(
+                                  parcelId: widget.parcelId,
+                                  receiverUid: parcel['receiverUid'],
+                                  senderUid: parcel['createdByUid'],
+                                  amount: (parcel['price'] ?? 0.0).toDouble(),
+                                ),
+                              ),
+                            );
+                          },
+                          label: "Pending Payment: Pay Now",
+                          icon: Icons.payments,
+                          color: kHighlightYellowOrange,
                         ),
-                      );
-                    },
-                    child: const Text("Pending Payment: Pay Now"),
+                    ],
                   ),
+                ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildButton({
+    required VoidCallback? onPressed,
+    required String label,
+    required IconData icon,
+    Color color = kAccentOliveGreen,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 5,
+        ),
+        icon: Icon(icon, size: 20),
+        label: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, VoidCallback onCall) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: kNeutralWarmBrown,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(color: kNeutralWarmBrown),
+            ),
+          ),
+          if (onCall != null)
+            IconButton(
+              onPressed: onCall,
+              icon: const Icon(Icons.phone, color: kPrimaryPurple),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
       ),
     );
   }
@@ -438,13 +598,20 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           icon: Icon(_isRecording ? Icons.stop : Icons.mic),
           label: Text(_isRecording ? 'Stop Recording' : 'Record Voice Note'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: _isRecording ? Colors.red : null,
+            backgroundColor: _isRecording ? Colors.red : kPrimaryPurple,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 5,
           ),
         ),
         if (_isRecording)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Recording...'),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('Recording...',
+                style: GoogleFonts.poppins(color: kNeutralWarmBrown)),
           ),
         const SizedBox(height: 12),
       ],
@@ -457,34 +624,24 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
         ElevatedButton.icon(
           onPressed: _isPlaying ? _stopPlaying : () => _playVoiceNote(parcel),
           icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
-          label: const Text('Play Voice Note'),
+          label: Text(_isPlaying ? 'Stop' : 'Play Voice Note'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _isPlaying ? kAccentOrange : kPrimaryPurple,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 5,
+          ),
         ),
         if (_isPlaying)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Playing...'),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('Playing...',
+                style: GoogleFonts.poppins(color: kNeutralWarmBrown)),
           ),
         const SizedBox(height: 12),
-      ],
-    );
-  }
-
-  Widget _buildDeliveryProofUploader(Map<String, dynamic> parcel) {
-    return ElevatedButton.icon(
-      onPressed: () => _uploadDeliveryProof(parcel),
-      icon: const Icon(Icons.camera_alt),
-      label: const Text('Upload Delivery Proof'),
-    );
-  }
-
-  Widget _buildDeliveryProofViewer(Map<String, dynamic> parcel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Delivery Proof:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Image.network(parcel['deliveryProofUrl']),
       ],
     );
   }
@@ -495,16 +652,36 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
         await picker.pickImage(source: ImageSource.camera, imageQuality: 70);
     if (img != null) {
       final f = File(img.path);
-      final ref = FirebaseStorage.instance
-          .ref('delivery_proofs/${widget.parcelId}.jpg');
+      final ref =
+          FirebaseStorage.instance.ref('delivery_proofs/${widget.parcelId}.jpg');
       await ref.putFile(f);
       final url = await ref.getDownloadURL();
       await _firestoreService
           .updateParcel(widget.parcelId, {'deliveryProofUrl': url});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Delivery proof uploaded!')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Delivery proof uploaded!')),
+        );
+      }
     }
+  }
+
+  Widget _buildDeliveryProofViewer(Map<String, dynamic> parcel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Delivery Proof:',
+            style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: kNeutralWarmBrown)),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.network(parcel['deliveryProofUrl']),
+        ),
+      ],
+    );
   }
 
   Widget _buildReviewButton(BuildContext context, Map<String, dynamic> parcel) {
@@ -520,10 +697,12 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     final hasUserReviewed = reviewsGiven[currentUserUid] == true;
 
     if (hasUserReviewed) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text('You have already reviewed this delivery.',
-            style: TextStyle(fontStyle: FontStyle.italic)),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+                fontStyle: FontStyle.italic, color: kNeutralWarmBrown)),
       );
     }
 
@@ -541,7 +720,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       return const SizedBox.shrink();
     }
 
-    return ElevatedButton.icon(
+    return _buildButton(
       onPressed: () {
         Navigator.push(
           context,
@@ -555,8 +734,9 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
         );
       },
-      icon: const Icon(Icons.star),
-      label: Text('Rate and Review $toRole'),
+      label: 'Rate and Review $toRole',
+      icon: Icons.star,
+      color: kHighlightYellowOrange,
     );
   }
 
@@ -566,17 +746,19 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Report User'),
+          title: Text(
+            'Report User',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
           content: TextFormField(
             controller: reportController,
-            decoration:
-                const InputDecoration(hintText: 'Reason for reporting...'),
+            decoration: const InputDecoration(hintText: 'Reason for reporting...'),
             maxLines: 3,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: GoogleFonts.poppins()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -594,12 +776,15 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                   createdAt: DateTime.now(),
                 );
                 await reportRef.set(report.toMap());
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Report submitted.')),
-                );
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Report submitted.')),
+                  );
+                }
               },
-              child: const Text('Submit'),
+              child: Text('Submit', style: GoogleFonts.poppins()),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),
           ],
         );
@@ -616,10 +801,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       final travelerUid = parcel['assignedTravelerUid'];
       if (travelerUid != null) {
         buttons.add(
-          ElevatedButton(
+          _buildButton(
             onPressed: () => _showReportDialog(travelerUid),
-            child: const Text('Report Traveler'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            label: 'Report Traveler',
+            icon: Icons.report,
+            color: kAccentOrange,
           ),
         );
       }
@@ -627,18 +813,20 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       final senderUid = parcel['createdByUid'];
       final receiverUid = parcel['receiverUid'];
       buttons.add(
-        ElevatedButton(
+        _buildButton(
           onPressed: () => _showReportDialog(senderUid),
-          child: const Text('Report Sender'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          label: 'Report Sender',
+          icon: Icons.report,
+          color: kAccentOrange,
         ),
       );
       if (receiverUid != null) {
         buttons.add(
-          ElevatedButton(
+          _buildButton(
             onPressed: () => _showReportDialog(receiverUid),
-            child: const Text('Report Receiver'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            label: 'Report Receiver',
+            icon: Icons.report,
+            color: kAccentOrange,
           ),
         );
       }
@@ -646,10 +834,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       final travelerUid = parcel['assignedTravelerUid'];
       if (travelerUid != null) {
         buttons.add(
-          ElevatedButton(
+          _buildButton(
             onPressed: () => _showReportDialog(travelerUid),
-            child: const Text('Report Traveler'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            label: 'Report Traveler',
+            icon: Icons.report,
+            color: kAccentOrange,
           ),
         );
       }
@@ -663,13 +852,17 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Block $blockedUserName?'),
-          content: const Text(
-              'They will not be able to see your packages, and you will not see theirs.'),
+          title: Text(
+            'Block $blockedUserName?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+              'They will not be able to see your packages, and you will not see theirs.',
+              style: GoogleFonts.poppins()),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: GoogleFonts.poppins()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -680,12 +873,16 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 await profileRef.update({
                   'blockedUsers': FieldValue.arrayUnion([blockedUid])
                 });
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('$blockedUserName has been blocked.')),
-                );
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('$blockedUserName has been blocked.',
+                            style: GoogleFonts.poppins())),
+                  );
+                }
               },
-              child: const Text('Block'),
+              child: Text('Block', style: GoogleFonts.poppins()),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),
           ],
@@ -703,9 +900,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       final travelerName = parcel['assignedTravelerName'] ?? 'Traveler';
       if (travelerUid != null) {
         buttons.add(
-          ElevatedButton(
+          _buildButton(
             onPressed: () => _showBlockDialog(travelerUid, travelerName),
-            child: const Text('Block Traveler'),
+            label: 'Block Traveler',
+            icon: Icons.block,
+            color: kAccentOrange,
           ),
         );
       }
@@ -713,9 +912,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       final senderUid = parcel['createdByUid'];
       final senderName = parcel['senderName'] ?? 'Sender';
       buttons.add(
-        ElevatedButton(
+        _buildButton(
           onPressed: () => _showBlockDialog(senderUid, senderName),
-          child: const Text('Block Sender'),
+          label: 'Block Sender',
+          icon: Icons.block,
+          color: kAccentOrange,
         ),
       );
     }
@@ -732,27 +933,26 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       return const SizedBox.shrink();
     }
 
-    return ElevatedButton(
+    return _buildButton(
       onPressed: () async {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Cancel Parcel?'),
-            content: const Text(
-                'Are you sure you want to cancel this parcel? This action cannot be undone.'),
+            title: Text('Cancel Parcel?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            content: Text(
+                'Are you sure you want to cancel this parcel? This action cannot be undone.', style: GoogleFonts.poppins()),
             actions: [
               TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('No')),
+                  child: Text('No', style: GoogleFonts.poppins())),
               ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Yes, Cancel')),
+                  child: Text('Yes, Cancel', style: GoogleFonts.poppins())),
             ],
           ),
         );
 
         if (confirm == true) {
-          // Update parcel status to canceled
           await FirebaseFirestore.instance
               .collection('parcels')
               .doc(widget.parcelId)
@@ -761,8 +961,6 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
-          // Check if payment was already processed and refund
-          // Assuming payment is processed when status becomes 'confirmed' or 'selected'
           final packagePrice = (parcel['price'] ?? 0.0).toDouble();
           final senderUid = parcel['createdByUid'];
 
@@ -770,21 +968,28 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
               parcel['status'] == 'selected') {
             await _walletService.refundMoney(
                 senderUid, packagePrice, widget.parcelId);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      'Parcel canceled and ₹${packagePrice.toStringAsFixed(2)} refunded to your wallet.')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(
+                        'Parcel canceled and ₹${packagePrice.toStringAsFixed(2)} refunded to your wallet.')),
+              );
+            }
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Parcel canceled.')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Parcel canceled.')),
+              );
+            }
           }
-          Navigator.of(context).pop(); // Pop PackageDetailScreen
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
         }
       },
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-      child: const Text('Cancel Parcel'),
+      label: 'Cancel Parcel',
+      icon: Icons.cancel,
+      color: Colors.orange,
     );
   }
 }
