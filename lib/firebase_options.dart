@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -49,22 +52,11 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDhJuJhAhgJ53WhvoBEctOADIpl7rcHR3w',
-    appId: '1:727408607976:web:d40b7e90cb87fa87107f5d',
-    messagingSenderId: '727408607976',
-    projectId: 'viago-d308a',
-    authDomain: 'viago-d308a.firebaseapp.com',
-    storageBucket: 'viago-d308a.firebasestorage.app',
-    measurementId: 'G-FLTN2YQHKK',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAnADpqlrqG_2rgrydm_Bg49OTJEQaykfY',
-    appId: '1:727408607976:android:becefd174b86a48a107f5d',
-    messagingSenderId: '727408607976',
-    projectId: 'viago-d308a',
-    storageBucket: 'viago-d308a.firebasestorage.app',
+    apiKey: 'AIzaSyCBa1EQmTEHLTK1eFn32vGp4bqwhjkOhm0',
+    appId: '1:308317437063:android:23fa7ae3411fc05a394c22',
+    messagingSenderId: '308317437063',
+    projectId: 'viago-final11',
+    storageBucket: 'viago-final11.firebasestorage.app',
   );
-
 }

@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "727408607976",
-    "project_id": "viago-d308a",
-    "storage_bucket": "viago-d308a.firebasestorage.app"
+    "project_number": "308317437063",
+    "project_id": "viago-final11",
+    "storage_bucket": "viago-final11.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:727408607976:android:becefd174b86a48a107f5d",
+        "mobilesdk_app_id": "1:308317437063:android:23fa7ae3411fc05a394c22",
         "android_client_info": {
           "package_name": "com.example.packmate"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAnADpqlrqG_2rgrydm_Bg49OTJEQaykfY"
+          "current_key": "AIzaSyCBa1EQmTEHLTK1eFn32vGp4bqwhjkOhm0"
         }
       ],
       "services": {
