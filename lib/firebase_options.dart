@@ -53,10 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCBa1EQmTEHLTK1eFn32vGp4bqwhjkOhm0',
-    appId: '1:308317437063:android:23fa7ae3411fc05a394c22',
-    messagingSenderId: '308317437063',
-    projectId: 'viago-final11',
-    storageBucket: 'viago-final11.firebasestorage.app',
+    apiKey: 'AIzaSyCmBzI__6rHii7NOTJi4PcHlCWHTy1EfuI',
+    appId: '1:237561051554:android:119a3ceb80815e3c3d5afb',
+    messagingSenderId: '237561051554',
+    projectId: 'viago-e1d4c',
+    storageBucket: 'viago-e1d4c.firebasestorage.app',
   );
 }

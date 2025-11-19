@@ -1,0 +1,99 @@
+# ViaGo / Packmate Project Overview
+
+## 1. High-Level Summary
+
+**Project Name:** ViaGo (also referred to as "Packmate" in `pubspec.yaml`)
+
+**Core Concept:** ViaGo is a mobile application built with Flutter that functions as a peer-to-peer parcel delivery platform. It connects users who need to send packages ("Senders") with users who are already traveling along a specific route ("Travelers"). The application aims to provide a faster, potentially cheaper, and more direct alternative to traditional courier services by leveraging the existing travel plans of its users.
+
+**Primary Goal:** To create a community-based logistics network where individuals can earn money by carrying parcels for others during their trips.
+
+## 2. Core Technologies
+
+*   **Frontend (Mobile App):** Flutter
+*   **Programming Language:** Dart
+*   **Backend & Cloud Services:** Google Firebase
+    *   **Authentication:** Firebase Authentication (Email/Password, Phone OTP)
+    *   **Database:** Cloud Firestore (for storing user data, parcel details, trips, etc.)
+    *   **Storage:** Firebase Cloud Storage (for user profile pictures, parcel images)
+    *   **Notifications:** Firebase Cloud Messaging (for push notifications about parcel status, chat messages, etc.)
+*   **JavaScript Tooling:** The presence of `package.json` with a `firebase` dependency suggests the use of Node.js-based Firebase Tools for backend management (e.g., deploying Firestore security rules, Cloud Functions).
+
+## 3. Application Architecture
+
+The application follows a standard Flutter architecture, separating concerns into different layers:
+
+*   **`lib/models`:** Defines the core data structures (Plain Old Dart Objects - PODOs) that represent the application's entities. This includes:
+    *   `User`: Profile information for both senders and travelers.
+    *   `Parcel`: Details of the package to be delivered (size, weight, origin, destination, value, etc.).
+    *   `Traveler`: Information about a traveler's trip.
+    *   `Wallet` & `WalletTransaction`: Manages the in-app payment and transaction system.
+    *   `Review`: User-submitted ratings and feedback.
+    *   `Report`: User-submitted issue reports.
+
+*   **`lib/screens`:** Contains the UI for every major feature of the app. Each file represents a distinct view that the user interacts with.
+
+*   **`lib/services`:** Handles business logic, data manipulation, and communication with external services (primarily Firebase). This includes:
+    *   `firestore_service.dart`: Manages all interactions with the Cloud Firestore database (CRUD operations for users, parcels, etc.).
+    *   `firebase_auth_service.dart`: Manages user sign-up, login, and session persistence.
+    *   `storage_service.dart`: Handles uploading and downloading files from Firebase Storage.
+    *   `wallet_service.dart`: Contains the logic for managing the user's wallet.
+    *   `location.dart`: Interacts with the `geolocator` package to handle GPS and location tracking.
+    *   `pricing.dart`: Likely contains logic to calculate delivery costs.
+
+*   **`lib/widgets`:** Stores reusable UI components (like the `parcel_status_bar.dart`) that are used across multiple screens to maintain a consistent look and feel.
+
+## 4. Key Features (Inferred from File Structure)
+
+### User Management
+*   **Authentication:** Secure sign-up and login with email/password and phone number (OTP verification).
+*   **Password Recovery:** "Forgot Password" functionality.
+*   **User Profiles:** View and edit user profile information.
+*   **Blocked Users:** Ability to block and manage blocked users.
+
+### Parcel Delivery (Sender Flow)
+*   **Create Shipment:** Senders can post details of a parcel they want to send.
+*   **Package Details:** View detailed information about a specific package.
+*   **Receiver Flow:** Logic for the recipient of the package, including payment and OTP confirmation for delivery.
+
+### Traveler Flow
+*   **Find Shipments:** Travelers can browse available parcels that match their route.
+*   **My Trips:** Manage and view personal travel itineraries.
+
+### Core Functionality
+*   **Home Screen:** A central dashboard displaying relevant information.
+*   **Real-time Chat:** In-app messaging between senders and travelers (`chat_screen.dart`).
+*   **Notifications:** Push notifications for important events (`notification_screen.dart`).
+*   **History:** View a history of past trips and deliveries.
+*   **Reviews and Ratings:** Users can leave reviews for each other after a successful delivery.
+
+### Payments & Wallet
+*   **In-App Wallet:** Each user has a personal wallet (`wallet_screen.dart`).
+*   **Add & Withdraw Money:** Functionality to load money into the wallet and withdraw funds.
+*   **Payments:** Senders pay for the delivery, and travelers receive the payment through the app.
+
+### Support & Safety
+*   **Help & Support:** A dedicated section for user assistance.
+*   **Reporting System:** Users can report issues with deliveries or other users (`my_reports_screen.dart`).
+*   **OTP on Delivery:** A security measure where the receiver provides an OTP to the traveler to confirm the package has been safely delivered.
+
+## 5. Key Dependencies & Their Purpose
+
+*   `firebase_*`: The backbone of the application's backend.
+*   `geolocator` & `flutter_map`: For location tracking and displaying maps, crucial for matching senders with travelers and tracking parcels.
+*   `image_picker` & `firebase_storage`: Allows users to upload photos (e.g., of their parcel or profile).
+*   `flutter_sound` & `permission_handler`: Suggests a potential voice note feature in the chat, requiring microphone permissions.
+*   `pin_code_fields`: Used for a polished OTP entry UI.
+*   `shared_preferences`: For storing simple, non-sensitive data locally on the device (e.g., user settings).
+*   `url_launcher`: To open external links (e.g., to a terms of service page).
+
+## 6. Potential User Journey
+
+1.  **Registration:** A new user signs up as either a "Sender" or a "Traveler" using their phone number or email.
+2.  **Sender Creates a Request:** A Sender fills out a form with parcel details (origin, destination, size, photo) and submits it. The app calculates a suggested price.
+3.  **Traveler Finds a Parcel:** A Traveler, who has already listed their upcoming trip (e.g., City A to City B), browses parcels that match their route.
+4.  **Negotiation/Agreement:** The Traveler accepts the delivery. The Sender is notified. They may communicate via the in-app chat.
+5.  **Pickup:** The Sender and Traveler arrange to meet for the parcel pickup.
+6.  **Delivery & Tracking:** The Traveler transports the parcel. The Sender can potentially track the traveler's progress on a map.
+7.  **Confirmation:** Upon arrival, the Traveler meets the Receiver. The Receiver provides an OTP code (sent to them by the app) to the Traveler, who enters it into their app to confirm the delivery.
+8.  **Payment & Review:** The payment is automatically transferred from the Sender's wallet to the Traveler's wallet. Both parties are then prompted to leave a review.
