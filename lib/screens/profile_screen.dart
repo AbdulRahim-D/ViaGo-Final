@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _profileImageUrl;
   double _averageRating = 0.0;
   int _ratingCount = 0;
+  bool _isEditing = false;
 
   final _usernameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -39,50 +40,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// ✅ Load profile data from Firestore
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString("username");
-    String? phone = prefs.getString("phone");
-
-    if (username == null || phone == null) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final query = await FirebaseFirestore.instance
-            .collection("users")
-            .where("uid", isEqualTo: user.uid)
-            .limit(1)
-            .get();
-
-        if (query.docs.isNotEmpty) {
-          final userData = query.docs.first.data();
-          username = userData["username"];
-          phone = userData["phone"];
-
-          await prefs.setString("username", username!);
-          await prefs.setString("phone", phone!);
-        }
-      }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Handle user not logged in
+      return;
     }
 
-    if (username != null) {
-      final profileDoc = await FirebaseFirestore.instance
-          .collection("profiles")
-          .doc(username)
-          .get();
+    final profileDoc = await FirebaseFirestore.instance
+        .collection("profiles")
+        .doc(user.uid)
+        .get();
 
-      if (profileDoc.exists) {
-        final data = profileDoc.data()!;
-        setState(() {
-          _usernameController.text = username!;
-          _phoneController.text = phone ?? "";
-          _nameController.text = data["name"] ?? "";
-          _ageController.text = data["age"] ?? "";
-          _genderController.text = data["gender"] ?? "";
-          _emailController.text = data["email"] ?? "";
-          _profileImageUrl = data["profileImage"];
-          _averageRating = (data['averageRating'] ?? 0.0).toDouble();
-          _ratingCount = data['ratingCount'] ?? 0;
-        });
-      }
+    if (profileDoc.exists) {
+      final data = profileDoc.data()!;
+      setState(() {
+        _usernameController.text = data["username"] ?? "";
+        _phoneController.text = data["phone"] ?? "";
+        _nameController.text = data["name"] ?? "";
+        _ageController.text = data["age"] ?? "";
+        _genderController.text = data["gender"] ?? "";
+        _emailController.text = data["email"] ?? "";
+        _profileImageUrl = data["profileImage"];
+        _averageRating = (data['averageRating'] ?? 0.0).toDouble();
+        _ratingCount = data['ratingCount'] ?? 0;
+      });
     }
   }
 
@@ -98,12 +79,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// ✅ Upload image to Firebase Storage
-  Future<String?> _uploadImage(File file, String username) async {
+  Future<String?> _uploadImage(File file, String userId) async {
     try {
       final ref = FirebaseStorage.instance
           .ref()
           .child("profile_images")
-          .child("$username.jpg");
+          .child("$userId.jpg");
 
       await ref.putFile(file);
       return await ref.getDownloadURL();
@@ -117,34 +98,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final username = _usernameController.text.trim();
-    final phone = _phoneController.text.trim();
-
-    // Validate user exists
-    final query = await FirebaseFirestore.instance
-        .collection("users")
-        .where("username", isEqualTo: username)
-        .where("phone", isEqualTo: phone)
-        .limit(1)
-        .get();
-
-    if (query.docs.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Invalid username or phone number. Try again.",
-            style: GoogleFonts.poppins(),
-          ),
-          backgroundColor: const Color(0xFFd79141),
-        ),
-      );
-      return;
-    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
     // Upload new image if selected
     if (_imageFile != null) {
-      final url = await _uploadImage(_imageFile!, username);
+      final url = await _uploadImage(_imageFile!, user.uid);
       if (url != null) {
         setState(() {
           _profileImageUrl = url;
@@ -154,8 +113,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Save profile into Firestore
     final data = {
-      "username": username,
-      "phone": phone,
+      "username": _usernameController.text.trim(),
+      "phone": _phoneController.text.trim(),
       "name": _nameController.text.trim(),
       "age": _ageController.text.trim(),
       "gender": _genderController.text.trim(),
@@ -166,13 +125,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     await FirebaseFirestore.instance
         .collection("profiles")
-        .doc(username)
+        .doc(user.uid)
         .set(data, SetOptions(merge: true));
 
-    // ✅ Update SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("username", username);
-    await prefs.setString("phone", phone);
+    setState(() {
+      _isEditing = false;
+    });
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -225,6 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onTap: () async {
               Navigator.pop(ctx);
+              await FirebaseAuth.instance.signOut();
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
               if (!mounted) return;
@@ -239,22 +198,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onTap: () async {
               Navigator.pop(ctx);
-              final username = _usernameController.text.trim();
-              if (username.isNotEmpty) {
-                await FirebaseFirestore.instance
-                    .collection("users")
-                    .where("username", isEqualTo: username)
-                    .get()
-                    .then((snapshot) async {
-                  for (var doc in snapshot.docs) {
-                    await doc.reference.delete();
-                  }
-                });
-
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
                 await FirebaseFirestore.instance
                     .collection("profiles")
-                    .doc(username)
+                    .doc(user.uid)
                     .delete();
+                await user.delete();
 
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
@@ -305,7 +255,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onChanged: (ThemeMode? newMode) {
                   if (newMode != null) {
                     myAppState?.setThemeMode(newMode);
-                    Navigator.pop(dialogContext); // Close dialog after selection
+                    Navigator.pop(
+                        dialogContext); // Close dialog after selection
                   }
                 },
               );
@@ -352,76 +303,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFe0e0e0),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFF514ca1), width: 3),
-                  ),
-                  child: ClipOval(
-                    child: _imageFile != null
-                        ? Image.file(_imageFile!, fit: BoxFit.cover)
-                        : (_profileImageUrl != null &&
-                                _profileImageUrl!.isNotEmpty)
-                            ? Image.network(_profileImageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.person, size: 60, color: Color(0xFF6c5050)))
-                            : const Icon(Icons.camera_alt,
-                                size: 40, color: Color(0xFF6c5050)),
-                  ),
-                ),
+        child: _isEditing ? _buildEditForm() : _buildProfileView(),
+      ),
+    );
+  }
+
+  Widget _buildProfileView() {
+    return Column(
+      children: [
+        _buildProfileImage(),
+        const SizedBox(height: 24),
+        _buildRatingDisplay(),
+        const SizedBox(height: 24),
+        _buildProfileInfo("Username", _usernameController.text),
+        _buildProfileInfo("Phone", _phoneController.text),
+        _buildProfileInfo("Name", _nameController.text),
+        _buildProfileInfo("Age", _ageController.text),
+        _buildProfileInfo("Gender", _genderController.text),
+        _buildProfileInfo("Email", _emailController.text),
+        const SizedBox(height: 40),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => setState(() => _isEditing = true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF514ca1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 24),
-              _buildRatingDisplay(),
-              const SizedBox(height: 24),
-              _buildTextFormField(
-                  _usernameController, "Username", "Enter username"),
-              const SizedBox(height: 16),
-              _buildTextFormField(
-                  _phoneController, "Phone Number", "Enter phone number"),
-              const SizedBox(height: 16),
-              _buildTextFormField(_nameController, "Name", "Enter name"),
-              const SizedBox(height: 16),
-              _buildTextFormField(_ageController, "Age", "Enter age"),
-              const SizedBox(height: 16),
-              _buildTextFormField(_genderController, "Gender", "Enter gender"),
-              const SizedBox(height: 16),
-              _buildTextFormField(_emailController, "Email", "Enter email"),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF514ca1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 5,
-                  ),
-                  child: Text(
-                    "Save",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 5,
+            ),
+            child: Text(
+              "Edit Profile",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
               ),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildProfileImage(),
+          const SizedBox(height: 24),
+          _buildTextFormField(_usernameController, "Username", "Enter username",
+              readOnly: true),
+          const SizedBox(height: 16),
+          _buildTextFormField(
+              _phoneController, "Phone Number", "Enter phone number",
+              readOnly: true),
+          const SizedBox(height: 16),
+          _buildTextFormField(_nameController, "Name", "Enter name"),
+          const SizedBox(height: 16),
+          _buildTextFormField(_ageController, "Age", "Enter age"),
+          const SizedBox(height: 16),
+          _buildTextFormField(_genderController, "Gender", "Enter gender"),
+          const SizedBox(height: 16),
+          _buildTextFormField(_emailController, "Email", "Enter email"),
+          const SizedBox(height: 40),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saveProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFa8ad5f),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: 5,
+              ),
+              child: Text(
+                "Save",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    return GestureDetector(
+      onTap: _isEditing ? _pickImage : null,
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: const Color(0xFFe0e0e0),
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF514ca1), width: 3),
+        ),
+        child: ClipOval(
+          child: _imageFile != null
+              ? Image.file(_imageFile!, fit: BoxFit.cover)
+              : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                  ? Image.network(_profileImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Color(0xFF6c5050)))
+                  : Icon(
+                      _isEditing ? Icons.camera_alt : Icons.person,
+                      size: 40,
+                      color: const Color(0xFF6c5050),
+                    ),
         ),
       ),
     );
@@ -452,24 +453,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildProfileInfo(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6c5050),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextFormField(
-      TextEditingController controller, String label, String validatorText) {
+      TextEditingController controller, String label, String validatorText,
+      {bool readOnly = false}) {
     return TextFormField(
       controller: controller,
+      readOnly: readOnly,
       style: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.poppins(color: const Color(0xFF6c5050)),
         filled: true,
-        fillColor: const Color(0xFFf5f5f5),
+        fillColor: readOnly ? Colors.grey[200] : const Color(0xFFf5f5f5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFFa8ad5f), width: 2), // Accent Olive Green
+          borderSide: const BorderSide(
+              color: Color(0xFFa8ad5f), width: 2), // Accent Olive Green
         ),
       ),
       validator: (v) => v == null || v.isEmpty ? validatorText : null,
